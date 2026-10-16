@@ -4,6 +4,10 @@
 export const cv = {
   fileName: "CV.pdf",
   pdfUrl: "",
+  // File the download button saves. Hosted in the repo at cv/cv.pdf, pinned to a commit;
+  // after replacing cv/cv.pdf in the repo, update the commit hash here.
+  downloadUrl: "https://cdn.jsdelivr.net/gh/Harbor-K/portfolio-macbook@62311e6b04b78320cb92873c01cc3d0f215b486e/cv/cv.pdf",
+  downloadName: "Harbor_CV.pdf",
   name: "Harbor (Jihyun Kim)",
   headline: "UI/UX & Product Designer · Geoje, South Korea",
   profile:

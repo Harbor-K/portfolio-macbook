@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ShareIcon, ZoomInIcon, ZoomOutIcon } from "lucide-react";
+import { DownloadIcon, ZoomInIcon, ZoomOutIcon } from "lucide-react";
 import type { DragHandleProps } from "./MacWindow";
 import { cv } from "../data/cv";
 
@@ -9,7 +9,32 @@ const glass =
 // A Preview-style document window: unified toolbar, gray canvas, white A4 page.
 export function Preview({ dragHandleProps, lights, zoomed }: { dragHandleProps: DragHandleProps; lights: React.ReactNode; zoomed: boolean }) {
   const [scale, setScale] = useState(1);
+  const [downloading, setDownloading] = useState(false);
   const effective = zoomed ? scale * 1.25 : scale;
+
+  // Save the PDF with a proper file name. The file lives on another origin (jsDelivr), where the
+  // <a download> attribute is ignored, so fetch it as a blob first; if that fails, open it in a new tab.
+  async function downloadPdf() {
+    if (!cv.downloadUrl || downloading) return;
+    setDownloading(true);
+    try {
+      const response = await fetch(cv.downloadUrl);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const blob = await response.blob();
+      const href = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = href;
+      link.download = cv.downloadName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(href), 1000);
+    } catch {
+      window.open(cv.downloadUrl, "_blank", "noopener");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   return (
     <div className="flex h-full flex-col bg-[#f5f5f7]">
@@ -38,8 +63,15 @@ export function Preview({ dragHandleProps, lights, zoomed }: { dragHandleProps: 
               <ZoomInIcon className="h-[15px] w-[15px]" />
             </button>
           </div>
-          <button type="button" aria-label="Share" className={`flex h-8 w-9 items-center justify-center rounded-full text-black/70 ${glass}`}>
-            <ShareIcon className="h-[15px] w-[15px]" />
+          <button
+            type="button"
+            aria-label="Download PDF"
+            title="Download PDF"
+            onClick={downloadPdf}
+            disabled={downloading}
+            className={`flex h-8 w-9 items-center justify-center rounded-full text-black/70 transition-opacity hover:text-black/90 disabled:opacity-50 ${glass}`}
+          >
+            <DownloadIcon className="h-[15px] w-[15px]" />
           </button>
         </div>
       </div>
