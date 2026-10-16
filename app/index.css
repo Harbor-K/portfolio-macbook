@@ -1,0 +1,36 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* macOS uses SF Pro as its system font (Apple HIG > Typography).
+   The system font stack renders SF Pro on Apple devices; other platforms fall back. */
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 13px; /* macOS default body size: 13 pt */
+  line-height: 16px;
+  color: rgba(0, 0, 0, 0.85);
+  background: #8fb4d9;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* macOS system colors (Apple HIG > Color > System colors, light) */
+  --system-red: rgb(255, 56, 60);
+  --system-orange: rgb(255, 141, 40);
+  --system-yellow: rgb(255, 204, 0);
+  --system-green: rgb(52, 199, 89);
+  --system-blue: rgb(0, 136, 255);
+  --system-purple: rgb(203, 48, 224);
+  --system-gray: rgb(142, 142, 147);
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+button {
+  font: inherit;
+  color: inherit;
+}
