@@ -6,3 +6,4 @@ Image assets for Harbor's macOS-style portfolio site.
 - `wallpaper/rooftops.jpg` — desktop wallpaper, rooftops at sunset (3206×1796)
 - `video/about.mp4` — Photo Booth video for the About window (H.264/AAC MP4)
 - `video/about-poster.jpg` — poster frame for that video
+- `about/portrait.jpg` — portrait for the desktop About icon
