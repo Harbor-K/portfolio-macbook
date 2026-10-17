@@ -8,6 +8,7 @@ import { Preview } from "./components/Preview";
 import { Browser } from "./components/Browser";
 import { KimLLM } from "./components/KimLLM";
 import { Reminders } from "./components/Reminders";
+import { Notes } from "./components/Notes";
 import { aboutIcon, aboutPortrait, aboutVideo } from "./data/aboutVideo";
 import { type DockApp, dockSections } from "./data/dock";
 import { projects, type Project } from "./data/portfolio";
@@ -16,7 +17,7 @@ import { tagColorFor } from "./data/tags";
 import { wallpaper, wallpaperStyle } from "./data/wallpaper";
 import { useScreenInit } from "./useScreenInit.js";
 
-type WindowName = "projects" | "about" | "cv" | "article" | "reminders";
+type WindowName = "projects" | "about" | "cv" | "article" | "reminders" | "notes";
 
 type ScreenInit = {
   openWindows?: Partial<Record<WindowName, boolean>>;
@@ -24,8 +25,8 @@ type ScreenInit = {
   photoBoothInfo?: boolean;
 };
 
-const windowTitles: Record<WindowName, string> = { projects: "Projects", about: "Photo Booth", cv: "CV.pdf", article: "Trust Bank", reminders: "Reminders" };
-const appNames: Record<WindowName, string> = { projects: "Finder", about: "Photo Booth", cv: "Preview", article: "Safari", reminders: "Reminders" };
+const windowTitles: Record<WindowName, string> = { projects: "Projects", about: "Photo Booth", cv: "CV.pdf", article: "Trust Bank", reminders: "Reminders", notes: "Notes" };
+const appNames: Record<WindowName, string> = { projects: "Finder", about: "Photo Booth", cv: "Preview", article: "Safari", reminders: "Reminders", notes: "Notes" };
 
 // Menu order follows Apple HIG > The menu bar (app menu, File, Edit, View, Window, Help).
 const menus = ["File", "Edit", "View", "Window", "Help"];
@@ -95,6 +96,7 @@ const dockThumbs: Record<WindowName, React.ReactNode> = {
       <span className="h-[2px] w-4/5 rounded-[1px] bg-black/20" />
     </span>
   ),
+  notes: <img src={notesIcon} alt="" className="h-[46px] w-[46px] object-contain" draggable={false} />,
 };
 
 export function App() {
@@ -107,10 +109,11 @@ export function App() {
     cv: screenInit.openWindows?.cv ?? false,
     article: screenInit.openWindows?.article ?? false,
     reminders: screenInit.openWindows?.reminders ?? false,
+    notes: screenInit.openWindows?.notes ?? false,
   });
-  const [minimized, setMinimized] = useState<Record<WindowName, boolean>>({ about: false, projects: false, cv: false, article: false, reminders: false });
+  const [minimized, setMinimized] = useState<Record<WindowName, boolean>>({ about: false, projects: false, cv: false, article: false, reminders: false, notes: false });
   const [minimizeOrder, setMinimizeOrder] = useState<WindowName[]>([]);
-  const [windowOrder, setWindowOrder] = useState<Record<WindowName, number>>({ projects: 20, about: 30, cv: 25, article: 26, reminders: 27 });
+  const [windowOrder, setWindowOrder] = useState<Record<WindowName, number>>({ projects: 20, about: 30, cv: 25, article: 26, reminders: 27, notes: 28 });
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
   const [llmOpen, setLlmOpen] = useState(false);
 
@@ -174,11 +177,12 @@ export function App() {
   });
 
   // Read only when a window first opens: it cascades past however many side windows are already showing.
-  const sideWindows: WindowName[] = ["projects", "cv", "article", "reminders"];
+  const sideWindows: WindowName[] = ["projects", "cv", "article", "reminders", "notes"];
   const stackFor = (name: WindowName) => sideWindows.filter((other) => other !== name && openWindows[other] && !minimized[other]).length;
   const projectsFrame = sideWindowFrame(stackFor("projects"));
   const cvFrame = sideWindowFrame(stackFor("cv"));
   const articleFrame = sideWindowFrame(stackFor("article"));
+  const notesFrame = sideWindowFrame(stackFor("notes"));
   // Reminders opens in the same cascade slot but at a narrower, list-like size.
   const remindersBase = sideWindowFrame(stackFor("reminders"));
   const remindersFrame = { position: remindersBase.position, size: { w: 440, h: Math.min(660, remindersBase.size.h) } };
@@ -259,7 +263,7 @@ export function App() {
             />
             <DesktopIcon label="CV.pdf" kind="image" imageSrc={cvPdfIcon} selected={selectedIcon === "CV"} onSelect={() => setSelectedIcon("CV")} onOpen={() => openWindow("cv")} />
             <DesktopIcon label="Book" kind="image" imageSrc={archiveBookIcon} selected={selectedIcon === "Book"} onSelect={() => setSelectedIcon("Book")} />
-            <DesktopIcon label="Notes" kind="image" imageSrc={notesIcon} selected={selectedIcon === "Notes"} onSelect={() => setSelectedIcon("Notes")} />
+            <DesktopIcon label="Notes" kind="image" imageSrc={notesIcon} selected={selectedIcon === "Notes"} onSelect={() => setSelectedIcon("Notes")} onOpen={() => openWindow("notes")} />
           </div>
         </section>
 
@@ -316,6 +320,20 @@ export function App() {
             {...windowProps("reminders")}
           >
             {({ dragHandleProps, lights }) => <Reminders dragHandleProps={dragHandleProps} lights={lights} />}
+          </MacWindow>
+        )}
+
+        {openWindows.notes && (
+          <MacWindow
+            title="Notes"
+            initialPosition={notesFrame.position}
+            initialSize={notesFrame.size}
+            widthClassName=""
+            resizable
+            minSize={{ w: 760, h: 360 }}
+            {...windowProps("notes")}
+          >
+            {({ dragHandleProps, lights }) => <Notes dragHandleProps={dragHandleProps} lights={lights} />}
           </MacWindow>
         )}
 

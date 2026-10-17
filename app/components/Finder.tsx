@@ -22,9 +22,9 @@ const favorites = [
 ];
 
 const tags = [
-  { name: "Blue", color: "var(--system-blue)" },
-  { name: "Green", color: "var(--system-green)" },
-  { name: "Orange", color: "var(--system-orange)" },
+  { name: "2026", color: "var(--system-blue)" },
+  { name: "2025", color: "var(--system-green)" },
+  { name: "2024-2022", color: "var(--system-orange)" },
 ];
 
 const glass =
