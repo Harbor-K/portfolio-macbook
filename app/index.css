@@ -47,3 +47,103 @@ button {
   font: inherit;
   color: inherit;
 }
+
+/* Dark mode (System Settings > Appearance). Light is the default; when the desktop has .theme-dark,
+   the light colors used inside windows ([data-themed]) are swapped for dark ones. Anything marked
+   [data-keep-light] (the CV page and the mock web page) stays light, like real documents and sites do. */
+.theme-dark [data-themed] .bg-white:not([data-keep-light], [data-keep-light] *) { background-color: #1e1e1e; }
+.theme-dark [data-themed] .bg-\[\#f0f0f2\]:not([data-keep-light], [data-keep-light] *) { background-color: #2b2b2d; }
+.theme-dark [data-themed] .bg-\[\#f0f0f2\]\/90:not([data-keep-light], [data-keep-light] *) { background-color: rgba(43,43,45,0.9); }
+.theme-dark [data-themed] .bg-\[\#f5f5f7\]:not([data-keep-light], [data-keep-light] *) { background-color: #252527; }
+.theme-dark [data-themed] .bg-\[\#f6f6f8\]:not([data-keep-light], [data-keep-light] *) { background-color: #252527; }
+.theme-dark [data-themed] .bg-\[\#e8e6e3\]:not([data-keep-light], [data-keep-light] *) { background-color: #2c2c2e; }
+.theme-dark [data-themed] .bg-\[\#d9d9de\]:not([data-keep-light], [data-keep-light] *) { background-color: #3a3a3c; }
+.theme-dark [data-themed] .bg-white\/70:not([data-keep-light], [data-keep-light] *) { background-color: rgba(72,72,76,0.7); }
+.theme-dark [data-themed] .bg-white\/80:not([data-keep-light], [data-keep-light] *) { background-color: rgba(44,44,46,0.85); }
+.theme-dark [data-themed] .bg-\[rgba\(238\,238\,242\,0\.82\)\]:not([data-keep-light], [data-keep-light] *) { background-color: rgba(38,38,42,0.84); }
+.theme-dark [data-themed] .text-black\/15:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.15); }
+.theme-dark [data-themed] .hover\:text-black\/15:hover:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.15); }
+.theme-dark [data-themed] .placeholder\:text-black\/15::placeholder { color: rgba(255,255,255,0.15); }
+.theme-dark [data-themed] .text-black\/25:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.25); }
+.theme-dark [data-themed] .hover\:text-black\/25:hover:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.25); }
+.theme-dark [data-themed] .placeholder\:text-black\/25::placeholder { color: rgba(255,255,255,0.25); }
+.theme-dark [data-themed] .text-black\/30:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.3); }
+.theme-dark [data-themed] .hover\:text-black\/30:hover:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.3); }
+.theme-dark [data-themed] .placeholder\:text-black\/30::placeholder { color: rgba(255,255,255,0.3); }
+.theme-dark [data-themed] .text-black\/35:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.35); }
+.theme-dark [data-themed] .hover\:text-black\/35:hover:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.35); }
+.theme-dark [data-themed] .placeholder\:text-black\/35::placeholder { color: rgba(255,255,255,0.35); }
+.theme-dark [data-themed] .text-black\/40:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.4); }
+.theme-dark [data-themed] .hover\:text-black\/40:hover:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.4); }
+.theme-dark [data-themed] .placeholder\:text-black\/40::placeholder { color: rgba(255,255,255,0.4); }
+.theme-dark [data-themed] .text-black\/45:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.45); }
+.theme-dark [data-themed] .hover\:text-black\/45:hover:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.45); }
+.theme-dark [data-themed] .placeholder\:text-black\/45::placeholder { color: rgba(255,255,255,0.45); }
+.theme-dark [data-themed] .text-black\/50:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.5); }
+.theme-dark [data-themed] .hover\:text-black\/50:hover:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.5); }
+.theme-dark [data-themed] .placeholder\:text-black\/50::placeholder { color: rgba(255,255,255,0.5); }
+.theme-dark [data-themed] .text-black\/55:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.55); }
+.theme-dark [data-themed] .hover\:text-black\/55:hover:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.55); }
+.theme-dark [data-themed] .placeholder\:text-black\/55::placeholder { color: rgba(255,255,255,0.55); }
+.theme-dark [data-themed] .text-black\/60:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.6); }
+.theme-dark [data-themed] .hover\:text-black\/60:hover:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.6); }
+.theme-dark [data-themed] .placeholder\:text-black\/60::placeholder { color: rgba(255,255,255,0.6); }
+.theme-dark [data-themed] .text-black\/70:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.7); }
+.theme-dark [data-themed] .hover\:text-black\/70:hover:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.7); }
+.theme-dark [data-themed] .placeholder\:text-black\/70::placeholder { color: rgba(255,255,255,0.7); }
+.theme-dark [data-themed] .text-black\/75:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.75); }
+.theme-dark [data-themed] .hover\:text-black\/75:hover:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.75); }
+.theme-dark [data-themed] .placeholder\:text-black\/75::placeholder { color: rgba(255,255,255,0.75); }
+.theme-dark [data-themed] .text-black\/80:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.8); }
+.theme-dark [data-themed] .hover\:text-black\/80:hover:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.8); }
+.theme-dark [data-themed] .placeholder\:text-black\/80::placeholder { color: rgba(255,255,255,0.8); }
+.theme-dark [data-themed] .text-black\/85:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.85); }
+.theme-dark [data-themed] .hover\:text-black\/85:hover:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.85); }
+.theme-dark [data-themed] .placeholder\:text-black\/85::placeholder { color: rgba(255,255,255,0.85); }
+.theme-dark [data-themed] .text-black\/90:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.9); }
+.theme-dark [data-themed] .hover\:text-black\/90:hover:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.9); }
+.theme-dark [data-themed] .placeholder\:text-black\/90::placeholder { color: rgba(255,255,255,0.9); }
+.theme-dark [data-themed] .text-\[\#1d1d1f\]:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.88); }
+.theme-dark [data-themed] .bg-black\/\[0\.03\]:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.04); }
+.theme-dark [data-themed] .hover\:bg-black\/\[0\.03\]:hover:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.04); }
+.theme-dark [data-themed] .bg-black\/\[0\.04\]:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.06); }
+.theme-dark [data-themed] .hover\:bg-black\/\[0\.04\]:hover:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.06); }
+.theme-dark [data-themed] .bg-black\/\[0\.05\]:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.07); }
+.theme-dark [data-themed] .hover\:bg-black\/\[0\.05\]:hover:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.07); }
+.theme-dark [data-themed] .bg-black\/\[0\.06\]:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.08); }
+.theme-dark [data-themed] .hover\:bg-black\/\[0\.06\]:hover:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.08); }
+.theme-dark [data-themed] .bg-black\/\[0\.07\]:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.1); }
+.theme-dark [data-themed] .hover\:bg-black\/\[0\.07\]:hover:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.1); }
+.theme-dark [data-themed] .bg-black\/\[0\.08\]:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.11); }
+.theme-dark [data-themed] .hover\:bg-black\/\[0\.08\]:hover:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.11); }
+.theme-dark [data-themed] .bg-black\/\[0\.1\]:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.12); }
+.theme-dark [data-themed] .hover\:bg-black\/\[0\.1\]:hover:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.12); }
+.theme-dark [data-themed] .bg-black\/\[0\.12\]:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.14); }
+.theme-dark [data-themed] .hover\:bg-black\/\[0\.12\]:hover:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.14); }
+.theme-dark [data-themed] .bg-black\/\[0\.14\]:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.16); }
+.theme-dark [data-themed] .hover\:bg-black\/\[0\.14\]:hover:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.16); }
+.theme-dark [data-themed] .bg-black\/5:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.07); }
+.theme-dark [data-themed] .hover\:bg-black\/5:hover:not([data-keep-light], [data-keep-light] *) { background-color: rgba(255,255,255,0.07); }
+.theme-dark [data-themed] .border-black\/\[0\.08\]:not([data-keep-light], [data-keep-light] *) { border-color: rgba(255,255,255,0.1); }
+.theme-dark [data-themed] .border-black\/\[0\.1\]:not([data-keep-light], [data-keep-light] *) { border-color: rgba(255,255,255,0.12); }
+.theme-dark [data-themed] .border-black\/10:not([data-keep-light], [data-keep-light] *) { border-color: rgba(255,255,255,0.12); }
+
+.theme-dark nav[aria-label="Dock"] > div {
+  background-color: rgba(30, 30, 32, 0.38);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.theme-dark nav[aria-label="Dock"] .bg-black\/20 {
+  background-color: rgba(255, 255, 255, 0.22);
+}
+.theme-dark nav[aria-label="Dock"] .bg-white\/80 {
+  background-color: rgba(44, 44, 46, 0.88);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.88);
+}
+
+/* New wallpaper fades in when changed in System Settings. */
+@keyframes wallpaperIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

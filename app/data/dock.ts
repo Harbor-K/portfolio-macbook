@@ -13,17 +13,19 @@ export type DockApp = {
   /** Small dot under the icon for apps that are open */
   running?: boolean;
   /** Which desktop window this icon opens, if any */
-  action?: "projects" | "about" | "reminders";
+  action?: "projects" | "about" | "reminders" | "settings";
   href?: string;
 };
 
 const icon = (name: string, commit = "d9d035cae736fb6ec079bb98968dbddcc5e10be9") =>
   `https://cdn.jsdelivr.net/gh/Harbor-K/portfolio-macbook@${commit}/dock/${name}.png`;
 
+export const settingsIcon = icon("settings-dark", "4fc944a5ae691ff19eb79f0ee6920253e1bcc987");
+
 export const dockSections: DockApp[][] = [
   [
     { id: "finder", name: "Finder", glyph: "folder", imageUrl: icon("finder"), running: true, action: "projects" },
-    { id: "system-settings", name: "System Settings", glyph: "settings", imageUrl: icon("settings-dark", "4fc944a5ae691ff19eb79f0ee6920253e1bcc987") },
+    { id: "system-settings", name: "System Settings", glyph: "settings", imageUrl: settingsIcon, action: "settings" },
     { id: "reminders", name: "Reminders", glyph: "list", imageUrl: icon("reminders"), badge: 2, action: "reminders" },
     { id: "music", name: "Music", glyph: "note", imageUrl: icon("music", "4fc944a5ae691ff19eb79f0ee6920253e1bcc987"), running: true },
   ],

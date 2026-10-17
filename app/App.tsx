@@ -9,15 +9,16 @@ import { Browser } from "./components/Browser";
 import { KimLLM } from "./components/KimLLM";
 import { Reminders } from "./components/Reminders";
 import { Notes } from "./components/Notes";
+import { Settings, type ThemeSetting } from "./components/Settings";
 import { aboutIcon, aboutPortrait, aboutVideo } from "./data/aboutVideo";
-import { type DockApp, dockSections } from "./data/dock";
+import { type DockApp, dockSections, settingsIcon } from "./data/dock";
 import { projects, type Project } from "./data/portfolio";
 import { archiveBookIcon, cvPdfIcon, notesIcon, projectFolderIcon } from "./data/projectFolderIcon";
 import { tagColorFor } from "./data/tags";
-import { wallpaper, wallpaperStyle } from "./data/wallpaper";
+import { defaultWallpaperId, wallpapers } from "./data/wallpaper";
 import { useScreenInit } from "./useScreenInit.js";
 
-type WindowName = "projects" | "about" | "cv" | "article" | "reminders" | "notes";
+type WindowName = "projects" | "about" | "cv" | "article" | "reminders" | "notes" | "settings";
 
 type ScreenInit = {
   openWindows?: Partial<Record<WindowName, boolean>>;
@@ -25,8 +26,8 @@ type ScreenInit = {
   photoBoothInfo?: boolean;
 };
 
-const windowTitles: Record<WindowName, string> = { projects: "Projects", about: "Photo Booth", cv: "CV.pdf", article: "Trust Bank", reminders: "Reminders", notes: "Notes" };
-const appNames: Record<WindowName, string> = { projects: "Finder", about: "Photo Booth", cv: "Preview", article: "Safari", reminders: "Reminders", notes: "Notes" };
+const windowTitles: Record<WindowName, string> = { projects: "Projects", about: "Photo Booth", cv: "CV.pdf", article: "Trust Bank", reminders: "Reminders", notes: "Notes", settings: "System Settings" };
+const appNames: Record<WindowName, string> = { projects: "Finder", about: "Photo Booth", cv: "Preview", article: "Safari", reminders: "Reminders", notes: "Notes", settings: "System Settings" };
 
 // Menu order follows Apple HIG > The menu bar (app menu, File, Edit, View, Window, Help).
 const menus = ["File", "Edit", "View", "Window", "Help"];
@@ -97,7 +98,38 @@ const dockThumbs: Record<WindowName, React.ReactNode> = {
     </span>
   ),
   notes: <img src={notesIcon} alt="" className="h-[46px] w-[46px] object-contain" draggable={false} />,
+  settings: <img src={settingsIcon} alt="" className="h-[46px] w-[46px] object-contain" draggable={false} />,
 };
+
+// Appearance and wallpaper choices are remembered in this browser only; if storage is blocked
+// (private window, embedded preview) the defaults are used and nothing breaks.
+function readSetting(key: string) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function writeSetting(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    /* storage unavailable: keep the choice for this visit only */
+  }
+}
+
+// "auto" follows the visitor's device (prefers-color-scheme), like macOS Appearance > Auto.
+function useSystemDark() {
+  const query = typeof window !== "undefined" && window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  const [dark, setDark] = useState(() => Boolean(query?.matches));
+  useEffect(() => {
+    if (!query) return;
+    const onChange = (event: MediaQueryListEvent) => setDark(event.matches);
+    query.addEventListener?.("change", onChange);
+    return () => query.removeEventListener?.("change", onChange);
+  }, [query]);
+  return dark;
+}
 
 export function App() {
   const now = useLocalClock();
@@ -110,12 +142,33 @@ export function App() {
     article: screenInit.openWindows?.article ?? false,
     reminders: screenInit.openWindows?.reminders ?? false,
     notes: screenInit.openWindows?.notes ?? false,
+    settings: screenInit.openWindows?.settings ?? false,
   });
-  const [minimized, setMinimized] = useState<Record<WindowName, boolean>>({ about: false, projects: false, cv: false, article: false, reminders: false, notes: false });
+  const [minimized, setMinimized] = useState<Record<WindowName, boolean>>({ about: false, projects: false, cv: false, article: false, reminders: false, notes: false, settings: false });
   const [minimizeOrder, setMinimizeOrder] = useState<WindowName[]>([]);
-  const [windowOrder, setWindowOrder] = useState<Record<WindowName, number>>({ projects: 20, about: 30, cv: 25, article: 26, reminders: 27, notes: 28 });
+  const [windowOrder, setWindowOrder] = useState<Record<WindowName, number>>({ projects: 20, about: 30, cv: 25, article: 26, reminders: 27, notes: 28, settings: 29 });
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
   const [llmOpen, setLlmOpen] = useState(false);
+  const [theme, setTheme] = useState<ThemeSetting>(() => {
+    const saved = readSetting("harbor.theme");
+    return saved === "auto" || saved === "light" || saved === "dark" ? saved : "light";
+  });
+  const [wallpaperId, setWallpaperId] = useState(() => {
+    const saved = readSetting("harbor.wallpaper");
+    return wallpapers.some((w) => w.id === saved) ? (saved as string) : defaultWallpaperId;
+  });
+  const systemDark = useSystemDark();
+  const isDark = theme === "dark" || (theme === "auto" && systemDark);
+  const wallpaper = wallpapers.find((w) => w.id === wallpaperId) ?? wallpapers[0];
+
+  function changeTheme(next: ThemeSetting) {
+    setTheme(next);
+    writeSetting("harbor.theme", next);
+  }
+  function changeWallpaper(id: string) {
+    setWallpaperId(id);
+    writeSetting("harbor.wallpaper", id);
+  }
 
   // ⌘K / Ctrl+K toggles Kim LLM, like Spotlight.
   useEffect(() => {
@@ -174,10 +227,11 @@ export function App() {
     onFocus: () => focusWindow(name),
     onClose: () => closeWindow(name),
     onMinimize: () => minimizeWindow(name),
+    appearance: (isDark ? "dark" : "light") as "dark" | "light",
   });
 
   // Read only when a window first opens: it cascades past however many side windows are already showing.
-  const sideWindows: WindowName[] = ["projects", "cv", "article", "reminders", "notes"];
+  const sideWindows: WindowName[] = ["projects", "cv", "article", "reminders", "notes", "settings"];
   const stackFor = (name: WindowName) => sideWindows.filter((other) => other !== name && openWindows[other] && !minimized[other]).length;
   const projectsFrame = sideWindowFrame(stackFor("projects"));
   const cvFrame = sideWindowFrame(stackFor("cv"));
@@ -186,6 +240,9 @@ export function App() {
   // Reminders opens in the same cascade slot but at a narrower, list-like size.
   const remindersBase = sideWindowFrame(stackFor("reminders"));
   const remindersFrame = { position: remindersBase.position, size: { w: 440, h: Math.min(660, remindersBase.size.h) } };
+  // System Settings opens at a fixed, settings-like size.
+  const settingsBase = sideWindowFrame(stackFor("settings"));
+  const settingsFrame = { position: settingsBase.position, size: { w: Math.min(760, settingsBase.size.w), h: Math.min(560, settingsBase.size.h) } };
 
   // A project with a mock article opens it in the Safari-style window; others open the Projects window.
   function openProject(project: Project) {
@@ -193,9 +250,16 @@ export function App() {
   }
 
   return (
-    <main className="relative h-screen w-full overflow-hidden text-[13px] leading-4">
+    <main className={`relative h-screen w-full overflow-hidden text-[13px] leading-4 ${isDark ? "theme-dark" : ""}`}>
       <div className="relative h-full min-w-[1040px] overflow-hidden" onClick={() => setSelectedIcon(null)}>
-        <img src={wallpaper} alt="" className="absolute inset-0 h-full w-full select-none object-cover" style={wallpaperStyle} draggable={false} />
+        <img
+          key={wallpaper.id}
+          src={wallpaper.src}
+          alt=""
+          className="absolute inset-0 h-full w-full animate-[wallpaperIn_400ms_ease-out] select-none object-cover"
+          style={{ objectPosition: wallpaper.objectPosition, filter: wallpaper.filter }}
+          draggable={false}
+        />
 
         {/* Menu bar: 24 pt tall (Apple HIG > The menu bar) */}
         <header className="absolute inset-x-0 top-0 z-[100] flex h-[24px] select-none items-center justify-between bg-gradient-to-b from-black/25 to-black/5 px-[10px] text-[13px] text-white [text-shadow:0_0_4px_rgba(0,0,0,0.35)]">
@@ -334,6 +398,29 @@ export function App() {
             {...windowProps("notes")}
           >
             {({ dragHandleProps, lights }) => <Notes dragHandleProps={dragHandleProps} lights={lights} />}
+          </MacWindow>
+        )}
+
+        {openWindows.settings && (
+          <MacWindow
+            title="System Settings"
+            initialPosition={settingsFrame.position}
+            initialSize={settingsFrame.size}
+            widthClassName=""
+            resizable
+            minSize={{ w: 600, h: 400 }}
+            {...windowProps("settings")}
+          >
+            {({ dragHandleProps, lights }) => (
+              <Settings
+                dragHandleProps={dragHandleProps}
+                lights={lights}
+                theme={theme}
+                onThemeChange={changeTheme}
+                wallpaperId={wallpaper.id}
+                onWallpaperChange={changeWallpaper}
+              />
+            )}
           </MacWindow>
         )}
 

@@ -279,6 +279,7 @@ export function MacWindow({
       style={{ ...frameStyle, transformOrigin: "center center" }}
       aria-label={title}
       aria-hidden={minimized}
+      data-themed=""
       onPointerDown={onFocus}
     >
       {typeof children === "function" ? (

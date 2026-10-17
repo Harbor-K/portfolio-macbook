@@ -67,7 +67,7 @@ export function KimLLM({ open, onClose }: { open: boolean; onClose: () => void }
   if (!open) return null;
 
   return (
-    <div className="absolute inset-0 z-[300] flex items-start justify-center bg-black/25 px-6 pt-[72px] backdrop-blur-[2px]" onPointerDown={onClose}>
+    <div data-themed="" className="absolute inset-0 z-[300] flex items-start justify-center bg-black/25 px-6 pt-[72px] backdrop-blur-[2px]" onPointerDown={onClose}>
       <style>{`@keyframes kimIn { from { opacity: 0; transform: translateY(-6px) scale(0.98); } to { opacity: 1; transform: none; } }`}</style>
       <div
         role="dialog"

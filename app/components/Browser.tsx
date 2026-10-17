@@ -40,7 +40,7 @@ export function Browser({ dragHandleProps, lights }: { dragHandleProps: DragHand
       </div>
 
       {/* Page */}
-      <div className="min-h-0 flex-1 select-text overflow-auto text-[#1d1d1f]">
+      <div data-keep-light="" className="min-h-0 flex-1 select-text overflow-auto bg-white text-[#1d1d1f]">
         <header className="px-10 pb-12 pt-10 text-white" style={{ background: article.brandColor }}>
           <img src={article.logo} alt="Trust" className="h-[44px] w-auto rounded-[4px]" draggable={false} />
           <p className="mt-10 text-[12px] font-semibold uppercase tracking-[0.1em] text-white/80">{article.eyebrow}</p>

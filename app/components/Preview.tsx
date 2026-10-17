@@ -92,7 +92,7 @@ export function Preview({ dragHandleProps, lights, zoomed }: { dragHandleProps: 
 
 function CvPage() {
   return (
-    <article className="min-h-[764px] w-[540px] select-text bg-white px-[46px] py-[50px] text-[11px] leading-[16px] text-[#1d1d1f] shadow-[0_2px_10px_rgba(0,0,0,0.2)]">
+    <article data-keep-light="" className="min-h-[764px] w-[540px] select-text bg-white px-[46px] py-[50px] text-[11px] leading-[16px] text-[#1d1d1f] shadow-[0_2px_10px_rgba(0,0,0,0.2)]">
       <h1 className="text-[24px] font-bold leading-[28px] tracking-[-0.01em]">{cv.name}</h1>
       <p className="mt-1 text-[12px] text-black/55">{cv.headline}</p>
       <hr className="my-5 border-black/10" />
