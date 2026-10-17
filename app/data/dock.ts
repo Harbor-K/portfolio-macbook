@@ -23,9 +23,9 @@ const icon = (name: string, commit = "d9d035cae736fb6ec079bb98968dbddcc5e10be9")
 export const dockSections: DockApp[][] = [
   [
     { id: "finder", name: "Finder", glyph: "folder", imageUrl: icon("finder"), running: true, action: "projects" },
-    { id: "system-settings", name: "System Settings", glyph: "settings", imageUrl: icon("settings", "a9005fe02da7ac19c8460d3aa2c6c0c2e55cb29e") },
+    { id: "system-settings", name: "System Settings", glyph: "settings", imageUrl: icon("settings-dark", "4fc944a5ae691ff19eb79f0ee6920253e1bcc987") },
     { id: "reminders", name: "Reminders", glyph: "list", imageUrl: icon("reminders"), badge: 2, action: "reminders" },
-    { id: "notes", name: "Notes", glyph: "note", imageUrl: icon("notes"), running: true },
+    { id: "music", name: "Music", glyph: "note", imageUrl: icon("music", "4fc944a5ae691ff19eb79f0ee6920253e1bcc987"), running: true },
   ],
   [
     { id: "figma", name: "Figma", glyph: "pen", imageUrl: icon("figma"), running: true },

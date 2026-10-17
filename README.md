@@ -12,7 +12,8 @@ Image assets for Harbor's macOS-style portfolio site.
 - `icons/archive-book.png` — desktop Archive icon (from harbor_book.svg, 256px)
 - `icons/trust-bank.png` — Trust Bank project thumbnail
 - `icons/cv-pdf.png` — desktop CV.pdf icon (Preview-style PDF document)
-- `dock/*.png` — Dock app icons (Finder, Settings, Reminders, Notes, Figma, Cursor, Claude), 160px
+- `icons/notes.png` — desktop Notes icon
+- `dock/*.png` — Dock app icons (Finder, Settings, Reminders, Music, Figma, Cursor, Claude), 160px
 
 ## Site code (`app/`)
 

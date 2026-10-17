@@ -10,3 +10,7 @@ export const archiveBookIcon =
 // CV.pdf icon: a Preview-style PDF document icon, hosted the same way.
 export const cvPdfIcon =
   "https://cdn.jsdelivr.net/gh/Harbor-K/portfolio-macbook@a9005fe02da7ac19c8460d3aa2c6c0c2e55cb29e/icons/cv-pdf.png";
+
+// Notes icon for the desktop (replaces News).
+export const notesIcon =
+  "https://cdn.jsdelivr.net/gh/Harbor-K/portfolio-macbook@4fc944a5ae691ff19eb79f0ee6920253e1bcc987/icons/notes.png";
