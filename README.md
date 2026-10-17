@@ -4,6 +4,7 @@ Image assets for Harbor's macOS-style portfolio site.
 
 - `wallpaper/field.jpg` — desktop wallpaper, field (2576×1932)
 - `wallpaper/rooftops.jpg` — desktop wallpaper, rooftops at sunset (3206×1796)
+- `wallpaper/pink-sky.jpg`, `wallpaper/seaside.jpg`, `wallpaper/park-sunset.jpg` — more wallpapers (System Settings > Wallpaper)
 - `video/about.mp4` — Photo Booth video for the About window (H.264/AAC MP4)
 - `video/about-poster.jpg` — poster frame for that video
 - `about/portrait.jpg` — portrait for the desktop About icon
@@ -13,6 +14,7 @@ Image assets for Harbor's macOS-style portfolio site.
 - `icons/trust-bank.png` — Trust Bank project thumbnail
 - `icons/cv-pdf.png` — desktop CV.pdf icon (Preview-style PDF document)
 - `icons/notes.png` — desktop Notes icon
+- `icons/gamecove.png`, `icons/utrada.png`, `icons/eto-markets.png` — project thumbnails
 - `notes/bovril-jar.jpg`, `notes/bovril-toast.jpg` — photos for the "Fun fact" note
 - `dock/*.png` — Dock app icons (Finder, Settings, Reminders, Music, Figma, Cursor, Claude), 160px
 
