@@ -30,6 +30,19 @@ body,
   min-height: 100%;
   margin: 0;
 }
+/* The desktop fills the window exactly, like a real screen: no page scrolling and no scrollbar
+   appearing at the right edge on hover. */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
 button {
   font: inherit;
   color: inherit;

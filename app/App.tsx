@@ -176,8 +176,8 @@ export function App() {
   }
 
   return (
-    <main className="relative min-h-screen w-full overflow-auto text-[13px] leading-4">
-      <div className="relative min-h-screen min-w-[1040px] overflow-hidden" onClick={() => setSelectedIcon(null)}>
+    <main className="relative h-screen w-full overflow-hidden text-[13px] leading-4">
+      <div className="relative h-full min-w-[1040px] overflow-hidden" onClick={() => setSelectedIcon(null)}>
         <img src={wallpaper} alt="" className="absolute inset-0 h-full w-full select-none object-cover" style={wallpaperStyle} draggable={false} />
 
         {/* Menu bar: 24 pt tall (Apple HIG > The menu bar) */}
