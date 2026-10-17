@@ -10,15 +10,16 @@ import { KimLLM } from "./components/KimLLM";
 import { Reminders } from "./components/Reminders";
 import { Notes } from "./components/Notes";
 import { Settings, type ThemeSetting } from "./components/Settings";
+import { SpinIt } from "./components/SpinIt";
 import { aboutIcon, aboutPortrait, aboutVideo } from "./data/aboutVideo";
-import { type DockApp, dockSections, settingsIcon } from "./data/dock";
+import { type DockApp, dockSections, settingsIcon, spinItIcon } from "./data/dock";
 import { projects, type Project } from "./data/portfolio";
 import { archiveBookIcon, cvPdfIcon, notesIcon, projectFolderIcon } from "./data/projectFolderIcon";
 import { tagColorFor } from "./data/tags";
 import { defaultWallpaperId, wallpapers } from "./data/wallpaper";
 import { useScreenInit } from "./useScreenInit.js";
 
-type WindowName = "projects" | "about" | "cv" | "article" | "reminders" | "notes" | "settings";
+type WindowName = "projects" | "about" | "cv" | "article" | "reminders" | "notes" | "settings" | "spinit";
 
 type ScreenInit = {
   openWindows?: Partial<Record<WindowName, boolean>>;
@@ -26,8 +27,8 @@ type ScreenInit = {
   photoBoothInfo?: boolean;
 };
 
-const windowTitles: Record<WindowName, string> = { projects: "Projects", about: "Photo Booth", cv: "CV.pdf", article: "Trust Bank", reminders: "Reminders", notes: "Notes", settings: "System Settings" };
-const appNames: Record<WindowName, string> = { projects: "Finder", about: "Photo Booth", cv: "Preview", article: "Safari", reminders: "Reminders", notes: "Notes", settings: "System Settings" };
+const windowTitles: Record<WindowName, string> = { projects: "Projects", about: "Photo Booth", cv: "CV.pdf", article: "Trust Bank", reminders: "Reminders", notes: "Notes", settings: "System Settings", spinit: "Spin it" };
+const appNames: Record<WindowName, string> = { projects: "Finder", about: "Photo Booth", cv: "Preview", article: "Safari", reminders: "Reminders", notes: "Notes", settings: "System Settings", spinit: "Spin it" };
 
 // Menu order follows Apple HIG > The menu bar (app menu, File, Edit, View, Window, Help).
 const menus = ["File", "Edit", "View", "Window", "Help"];
@@ -35,6 +36,8 @@ const menus = ["File", "Edit", "View", "Window", "Help"];
 // Window layout. Photo Booth sits top-left; Projects and CV open in one tidy slot to its right,
 // stretching down to just above the Dock and stopping short of the desktop icons.
 const photoBoothFrame = { x: 20, y: 40, w: 420, h: 368 };
+// The Spin it turntable sits just under Photo Booth, the same width.
+const spinItFrame = { x: photoBoothFrame.x, y: photoBoothFrame.y + photoBoothFrame.h + 16, w: photoBoothFrame.w, h: 196 };
 const windowGap = 16;
 const desktopIconsWidth = 244; // stop just short of the two desktop icon columns on the right
 const dockClearance = 92; // end just above the Dock, with a small gap
@@ -99,6 +102,7 @@ const dockThumbs: Record<WindowName, React.ReactNode> = {
   ),
   notes: <img src={notesIcon} alt="" className="h-[46px] w-[46px] object-contain" draggable={false} />,
   settings: <img src={settingsIcon} alt="" className="h-[46px] w-[46px] object-contain" draggable={false} />,
+  spinit: <img src={spinItIcon} alt="" className="h-[46px] w-[46px] object-contain" draggable={false} />,
 };
 
 // Appearance and wallpaper choices are remembered in this browser only; if storage is blocked
@@ -143,10 +147,11 @@ export function App() {
     reminders: screenInit.openWindows?.reminders ?? false,
     notes: screenInit.openWindows?.notes ?? false,
     settings: screenInit.openWindows?.settings ?? false,
+    spinit: screenInit.openWindows?.spinit ?? true,
   });
-  const [minimized, setMinimized] = useState<Record<WindowName, boolean>>({ about: false, projects: false, cv: false, article: false, reminders: false, notes: false, settings: false });
+  const [minimized, setMinimized] = useState<Record<WindowName, boolean>>({ about: false, projects: false, cv: false, article: false, reminders: false, notes: false, settings: false, spinit: false });
   const [minimizeOrder, setMinimizeOrder] = useState<WindowName[]>([]);
-  const [windowOrder, setWindowOrder] = useState<Record<WindowName, number>>({ projects: 20, about: 30, cv: 25, article: 26, reminders: 27, notes: 28, settings: 29 });
+  const [windowOrder, setWindowOrder] = useState<Record<WindowName, number>>({ projects: 20, about: 30, cv: 25, article: 26, reminders: 27, notes: 28, settings: 29, spinit: 19 });
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
   const [llmOpen, setLlmOpen] = useState(false);
   const [theme, setTheme] = useState<ThemeSetting>(() => {
@@ -421,6 +426,18 @@ export function App() {
                 onWallpaperChange={changeWallpaper}
               />
             )}
+          </MacWindow>
+        )}
+
+        {openWindows.spinit && (
+          <MacWindow
+            title="Spin it"
+            initialPosition={{ x: spinItFrame.x, y: spinItFrame.y }}
+            initialSize={{ w: spinItFrame.w, h: spinItFrame.h }}
+            widthClassName=""
+            {...windowProps("spinit")}
+          >
+            {({ dragHandleProps, lights }) => <SpinIt dragHandleProps={dragHandleProps} lights={lights} />}
           </MacWindow>
         )}
 
