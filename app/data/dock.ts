@@ -1,6 +1,5 @@
 // Harbor's Dock, in the same order and grouping as her real Dock.
-// Each app has an `imageUrl` slot: paste a hosted PNG of that app's icon to show it.
-// Until then a neutral placeholder tile is drawn.
+// Icons are hosted in the public GitHub repo Harbor-K/portfolio-macbook (dock/) via jsDelivr, pinned to a commit.
 
 export type DockGlyph = "folder" | "list" | "settings" | "globe" | "book" | "pen" | "aperture" | "note" | "message" | "code" | "trash";
 
@@ -18,21 +17,18 @@ export type DockApp = {
   href?: string;
 };
 
+const icon = (name: string) => `https://cdn.jsdelivr.net/gh/Harbor-K/portfolio-macbook@d9d035cae736fb6ec079bb98968dbddcc5e10be9/dock/${name}.png`;
+
 export const dockSections: DockApp[][] = [
   [
-    { id: "finder", name: "Finder", glyph: "folder", running: true, action: "projects" },
-    { id: "reminders", name: "Reminders", glyph: "list", badge: 2 },
-    { id: "system-settings", name: "System Settings", glyph: "settings", badge: 1 },
-    { id: "chrome", name: "Google Chrome", glyph: "globe", running: true },
-    { id: "notion", name: "Notion", glyph: "book", running: true },
+    { id: "finder", name: "Finder", glyph: "folder", imageUrl: icon("finder"), running: true, action: "projects" },
+    { id: "system-settings", name: "System Settings", glyph: "settings", imageUrl: icon("settings"), badge: 1 },
+    { id: "reminders", name: "Reminders", glyph: "list", imageUrl: icon("reminders"), badge: 2 },
+    { id: "notes", name: "Notes", glyph: "note", imageUrl: icon("notes"), running: true },
   ],
   [
-    { id: "figma", name: "Figma", glyph: "pen", running: true },
-    // Name not confirmed yet — rename once known.
-    { id: "app-6", name: "App", glyph: "aperture", running: true },
-    { id: "notes", name: "Notes", glyph: "note", running: true },
-    { id: "claude", name: "Claude", glyph: "message", running: true },
-    // Name not confirmed yet — rename once known.
-    { id: "app-9", name: "App", glyph: "code", running: true },
+    { id: "figma", name: "Figma", glyph: "pen", imageUrl: icon("figma"), running: true },
+    { id: "cursor", name: "Cursor", glyph: "code", imageUrl: icon("cursor"), running: true },
+    { id: "claude", name: "Claude", glyph: "message", imageUrl: icon("claude"), running: true },
   ],
 ];
