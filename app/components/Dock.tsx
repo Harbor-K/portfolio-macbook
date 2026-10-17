@@ -43,7 +43,6 @@ type DockProps = {
 // a light Liquid Glass shelf, and no magnification (the macOS default).
 export function Dock({ sections, isRunning, onOpen, minimized = [] }: DockProps) {
   const [hovered, setHovered] = useState<string | null>(null);
-  const lastIndex = sections.length - 1;
 
   return (
     <nav aria-label="Dock" className="absolute bottom-[6px] left-1/2 z-[90] -translate-x-1/2">
@@ -51,16 +50,6 @@ export function Dock({ sections, isRunning, onOpen, minimized = [] }: DockProps)
         {sections.map((section, sectionIndex) => (
           <React.Fragment key={sectionIndex}>
             {sectionIndex > 0 && <span className="h-[46px] w-px shrink-0 bg-black/20" aria-hidden="true" />}
-            {sectionIndex === lastIndex &&
-              minimized.map((win) => (
-                <MinimizedItem
-                  key={win.id}
-                  win={win}
-                  showLabel={hovered === `min-${win.id}`}
-                  onHover={() => setHovered(`min-${win.id}`)}
-                  onLeave={() => setHovered((current) => (current === `min-${win.id}` ? null : current))}
-                />
-              ))}
             {section.map((app) => (
               <DockItem
                 key={app.id}
@@ -73,6 +62,17 @@ export function Dock({ sections, isRunning, onOpen, minimized = [] }: DockProps)
               />
             ))}
           </React.Fragment>
+        ))}
+        {/* Minimized windows sit at the right end, after their own divider, as on macOS. */}
+        {minimized.length > 0 && <span className="h-[46px] w-px shrink-0 bg-black/20" aria-hidden="true" />}
+        {minimized.map((win) => (
+          <MinimizedItem
+            key={win.id}
+            win={win}
+            showLabel={hovered === `min-${win.id}`}
+            onHover={() => setHovered(`min-${win.id}`)}
+            onLeave={() => setHovered((current) => (current === `min-${win.id}` ? null : current))}
+          />
         ))}
       </div>
     </nav>

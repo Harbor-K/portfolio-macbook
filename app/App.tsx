@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BatteryFullIcon, SearchIcon, SlidersHorizontalIcon, WifiIcon } from "lucide-react";
+import { SlidersHorizontalIcon } from "lucide-react";
 import { DesktopIcon } from "./components/DesktopIcon";
 import { Dock, type MinimizedWindow } from "./components/Dock";
 import { Finder } from "./components/Finder";
@@ -9,7 +9,7 @@ import { Preview } from "./components/Preview";
 import { aboutIcon, aboutPortrait, aboutVideo } from "./data/aboutVideo";
 import { type DockApp, dockSections } from "./data/dock";
 import { projects } from "./data/portfolio";
-import { projectFolderIcon } from "./data/projectFolderIcon";
+import { archiveBookIcon, projectFolderIcon } from "./data/projectFolderIcon";
 import { tagColorFor } from "./data/tags";
 import { wallpaper, wallpaperStyle } from "./data/wallpaper";
 import { useScreenInit } from "./useScreenInit.js";
@@ -161,9 +161,6 @@ export function App() {
             ))}
           </nav>
           <div className="flex items-center gap-[14px]">
-            <BatteryFullIcon className="h-[15px] w-[22px]" strokeWidth={1.8} aria-label="Battery" />
-            <WifiIcon className="h-[15px] w-[15px]" strokeWidth={2.2} aria-label="Wi-Fi" />
-            <SearchIcon className="h-[14px] w-[14px]" strokeWidth={2.2} aria-label="Spotlight" />
             <SlidersHorizontalIcon className="h-[14px] w-[14px]" strokeWidth={2.2} aria-label="Control Center" />
             <time dateTime={now.toISOString()} className="whitespace-pre tabular-nums">
               {formatMenuTime(now)}
@@ -206,8 +203,7 @@ export function App() {
               onOpen={() => openWindow("projects")}
             />
             <DesktopIcon label="CV.pdf" kind="pdf" selected={selectedIcon === "CV"} onSelect={() => setSelectedIcon("CV")} onOpen={() => openWindow("cv")} />
-            <DesktopIcon label="Soundcloud" kind="disc" selected={selectedIcon === "Soundcloud"} onSelect={() => setSelectedIcon("Soundcloud")} />
-            <DesktopIcon label="Archive" kind="archive" selected={selectedIcon === "Archive"} onSelect={() => setSelectedIcon("Archive")} />
+            <DesktopIcon label="Archive" kind="image" imageSrc={archiveBookIcon} selected={selectedIcon === "Archive"} onSelect={() => setSelectedIcon("Archive")} />
             <DesktopIcon label="News" kind="news" selected={selectedIcon === "News"} onSelect={() => setSelectedIcon("News")} />
           </div>
         </section>

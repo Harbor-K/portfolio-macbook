@@ -35,5 +35,4 @@ export const dockSections: DockApp[][] = [
     // Name not confirmed yet — rename once known.
     { id: "app-9", name: "App", glyph: "code", running: true },
   ],
-  [{ id: "trash", name: "Trash", glyph: "trash" }],
 ];
