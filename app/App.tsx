@@ -105,7 +105,7 @@ const dockThumbs: Record<WindowName, React.ReactNode> = {
   spinit: <img src={spinItIcon} alt="" className="h-[46px] w-[46px] object-contain" draggable={false} />,
 };
 
-// Appearance and wallpaper choices are remembered in this browser only; if storage is blocked
+// The wallpaper choice is remembered in this browser only; if storage is blocked
 // (private window, embedded preview) the defaults are used and nothing breaks.
 function readSetting(key: string) {
   try {
@@ -154,10 +154,8 @@ export function App() {
   const [windowOrder, setWindowOrder] = useState<Record<WindowName, number>>({ projects: 20, about: 30, cv: 25, article: 26, reminders: 27, notes: 28, settings: 29, spinit: 19 });
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
   const [llmOpen, setLlmOpen] = useState(false);
-  const [theme, setTheme] = useState<ThemeSetting>(() => {
-    const saved = readSetting("harbor.theme");
-    return saved === "auto" || saved === "light" || saved === "dark" ? saved : "light";
-  });
+  // Every visit starts in Light mode; Dark/Auto apply only until the page is reloaded.
+  const [theme, setTheme] = useState<ThemeSetting>("light");
   const [wallpaperId, setWallpaperId] = useState(() => {
     const saved = readSetting("harbor.wallpaper");
     return wallpapers.some((w) => w.id === saved) ? (saved as string) : defaultWallpaperId;
@@ -168,7 +166,6 @@ export function App() {
 
   function changeTheme(next: ThemeSetting) {
     setTheme(next);
-    writeSetting("harbor.theme", next);
   }
   function changeWallpaper(id: string) {
     setWallpaperId(id);
