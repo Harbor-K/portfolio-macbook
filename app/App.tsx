@@ -35,17 +35,20 @@ const photoBoothFrame = { x: 20, y: 40, w: 420, h: 368 };
 const windowGap = 16;
 const desktopIconsWidth = 244; // stop just short of the two desktop icon columns on the right
 const dockClearance = 92; // end just above the Dock, with a small gap
-const cascadeStep = 24; // offset when both side windows are open, like macOS cascading
+const cascadeStep = { x: 40, y: 30 }; // each extra side window opens this far down-right of the last, like macOS cascading
+const maxCascade = 6; // after this many, start again from the first position so windows stay on screen
 
-function sideWindowFrame(cascade: boolean): { position: { x: number; y: number }; size: WindowSize } {
+// `stack` = how many side windows are already open; each one pushes the new window down and to the
+// right so the windows overlap but every title bar stays visible. The size is the same for all.
+function sideWindowFrame(stack: number): { position: { x: number; y: number }; size: WindowSize } {
   const viewportW = Math.max(typeof window === "undefined" ? 1280 : window.innerWidth, 1040);
   const viewportH = typeof window === "undefined" ? 800 : window.innerHeight;
-  const offset = cascade ? cascadeStep : 0;
-  const x = photoBoothFrame.x + photoBoothFrame.w + windowGap + offset;
-  const y = photoBoothFrame.y + offset;
-  const w = Math.max(600, viewportW - x - desktopIconsWidth);
-  const h = Math.max(320, viewportH - y - dockClearance);
-  return { position: { x, y }, size: { w, h } };
+  const baseX = photoBoothFrame.x + photoBoothFrame.w + windowGap;
+  const baseY = photoBoothFrame.y;
+  const w = Math.max(600, viewportW - baseX - desktopIconsWidth);
+  const h = Math.max(320, viewportH - baseY - dockClearance);
+  const step = stack % maxCascade;
+  return { position: { x: baseX + step * cascadeStep.x, y: baseY + step * cascadeStep.y }, size: { w, h } };
 }
 
 function useLocalClock() {
@@ -160,10 +163,12 @@ export function App() {
     onMinimize: () => minimizeWindow(name),
   });
 
-  // Read only when a window first opens: the second side window cascades if the other is already open.
-  const projectsFrame = sideWindowFrame(openWindows.cv);
-  const cvFrame = sideWindowFrame(openWindows.projects);
-  const articleFrame = sideWindowFrame(openWindows.projects || openWindows.cv);
+  // Read only when a window first opens: it cascades past however many side windows are already showing.
+  const sideWindows: WindowName[] = ["projects", "cv", "article"];
+  const stackFor = (name: WindowName) => sideWindows.filter((other) => other !== name && openWindows[other] && !minimized[other]).length;
+  const projectsFrame = sideWindowFrame(stackFor("projects"));
+  const cvFrame = sideWindowFrame(stackFor("cv"));
+  const articleFrame = sideWindowFrame(stackFor("article"));
 
   // A project with a mock article opens it in the Safari-style window; others open the Projects window.
   function openProject(project: Project) {
