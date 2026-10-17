@@ -13,7 +13,7 @@ export type DockApp = {
   /** Small dot under the icon for apps that are open */
   running?: boolean;
   /** Which desktop window this icon opens, if any */
-  action?: "projects" | "about";
+  action?: "projects" | "about" | "reminders";
   href?: string;
 };
 
@@ -23,7 +23,7 @@ export const dockSections: DockApp[][] = [
   [
     { id: "finder", name: "Finder", glyph: "folder", imageUrl: icon("finder"), running: true, action: "projects" },
     { id: "system-settings", name: "System Settings", glyph: "settings", imageUrl: icon("settings"), badge: 1 },
-    { id: "reminders", name: "Reminders", glyph: "list", imageUrl: icon("reminders"), badge: 2 },
+    { id: "reminders", name: "Reminders", glyph: "list", imageUrl: icon("reminders"), badge: 2, action: "reminders" },
     { id: "notes", name: "Notes", glyph: "note", imageUrl: icon("notes"), running: true },
   ],
   [

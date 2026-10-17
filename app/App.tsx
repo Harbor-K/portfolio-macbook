@@ -7,6 +7,7 @@ import { PhotoBooth } from "./components/PhotoBooth";
 import { Preview } from "./components/Preview";
 import { Browser } from "./components/Browser";
 import { KimLLM } from "./components/KimLLM";
+import { Reminders } from "./components/Reminders";
 import { aboutIcon, aboutPortrait, aboutVideo } from "./data/aboutVideo";
 import { type DockApp, dockSections } from "./data/dock";
 import { projects, type Project } from "./data/portfolio";
@@ -15,7 +16,7 @@ import { tagColorFor } from "./data/tags";
 import { wallpaper, wallpaperStyle } from "./data/wallpaper";
 import { useScreenInit } from "./useScreenInit.js";
 
-type WindowName = "projects" | "about" | "cv" | "article";
+type WindowName = "projects" | "about" | "cv" | "article" | "reminders";
 
 type ScreenInit = {
   openWindows?: Partial<Record<WindowName, boolean>>;
@@ -23,8 +24,8 @@ type ScreenInit = {
   photoBoothInfo?: boolean;
 };
 
-const windowTitles: Record<WindowName, string> = { projects: "Projects", about: "Photo Booth", cv: "CV.pdf", article: "Trust Bank" };
-const appNames: Record<WindowName, string> = { projects: "Finder", about: "Photo Booth", cv: "Preview", article: "Safari" };
+const windowTitles: Record<WindowName, string> = { projects: "Projects", about: "Photo Booth", cv: "CV.pdf", article: "Trust Bank", reminders: "Reminders" };
+const appNames: Record<WindowName, string> = { projects: "Finder", about: "Photo Booth", cv: "Preview", article: "Safari", reminders: "Reminders" };
 
 // Menu order follows Apple HIG > The menu bar (app menu, File, Edit, View, Window, Help).
 const menus = ["File", "Edit", "View", "Window", "Help"];
@@ -86,6 +87,14 @@ const dockThumbs: Record<WindowName, React.ReactNode> = {
       trust
     </span>
   ),
+  reminders: (
+    <span className="flex h-[48px] w-[38px] flex-col gap-[4px] rounded-[3px] bg-white p-[5px] shadow-[0_2px_5px_rgba(0,0,0,0.3)]">
+      <span className="h-[4px] w-3/4 rounded-[1px] bg-[#ff383c]" />
+      <span className="mt-[2px] h-[2px] w-full rounded-[1px] bg-black/20" />
+      <span className="h-[2px] w-full rounded-[1px] bg-black/20" />
+      <span className="h-[2px] w-4/5 rounded-[1px] bg-black/20" />
+    </span>
+  ),
 };
 
 export function App() {
@@ -97,10 +106,11 @@ export function App() {
     projects: screenInit.openWindows?.projects ?? false,
     cv: screenInit.openWindows?.cv ?? false,
     article: screenInit.openWindows?.article ?? false,
+    reminders: screenInit.openWindows?.reminders ?? false,
   });
-  const [minimized, setMinimized] = useState<Record<WindowName, boolean>>({ about: false, projects: false, cv: false, article: false });
+  const [minimized, setMinimized] = useState<Record<WindowName, boolean>>({ about: false, projects: false, cv: false, article: false, reminders: false });
   const [minimizeOrder, setMinimizeOrder] = useState<WindowName[]>([]);
-  const [windowOrder, setWindowOrder] = useState<Record<WindowName, number>>({ projects: 20, about: 30, cv: 25, article: 26 });
+  const [windowOrder, setWindowOrder] = useState<Record<WindowName, number>>({ projects: 20, about: 30, cv: 25, article: 26, reminders: 27 });
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
   const [llmOpen, setLlmOpen] = useState(false);
 
@@ -164,11 +174,14 @@ export function App() {
   });
 
   // Read only when a window first opens: it cascades past however many side windows are already showing.
-  const sideWindows: WindowName[] = ["projects", "cv", "article"];
+  const sideWindows: WindowName[] = ["projects", "cv", "article", "reminders"];
   const stackFor = (name: WindowName) => sideWindows.filter((other) => other !== name && openWindows[other] && !minimized[other]).length;
   const projectsFrame = sideWindowFrame(stackFor("projects"));
   const cvFrame = sideWindowFrame(stackFor("cv"));
   const articleFrame = sideWindowFrame(stackFor("article"));
+  // Reminders opens in the same cascade slot but at a narrower, list-like size.
+  const remindersBase = sideWindowFrame(stackFor("reminders"));
+  const remindersFrame = { position: remindersBase.position, size: { w: 440, h: Math.min(660, remindersBase.size.h) } };
 
   // A project with a mock article opens it in the Safari-style window; others open the Projects window.
   function openProject(project: Project) {
@@ -292,6 +305,20 @@ export function App() {
           </MacWindow>
         )}
 
+        {openWindows.reminders && (
+          <MacWindow
+            title="Reminders"
+            initialPosition={remindersFrame.position}
+            initialSize={remindersFrame.size}
+            widthClassName=""
+            resizable
+            minSize={{ w: 380, h: 360 }}
+            {...windowProps("reminders")}
+          >
+            {({ dragHandleProps, lights }) => <Reminders dragHandleProps={dragHandleProps} lights={lights} />}
+          </MacWindow>
+        )}
+
         {openWindows.about && (
           <MacWindow
             title="Photo Booth"
@@ -308,7 +335,7 @@ export function App() {
 
         <KimLLM open={llmOpen} onClose={() => setLlmOpen(false)} />
 
-        <Dock sections={dockSections} isRunning={(app) => Boolean(app.running)} onOpen={openFromDock} minimized={minimizedInDock} />
+        <Dock sections={dockSections} isRunning={(app) => Boolean(app.running || (app.action && openWindows[app.action]))} onOpen={openFromDock} minimized={minimizedInDock} />
       </div>
     </main>
   );
