@@ -7,17 +7,44 @@ const glass =
   "bg-white/70 shadow-[0_1px_3px_rgba(0,0,0,0.08),inset_0_0_0_0.5px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-xl";
 
 // A Safari-style window showing a mock case-study page (not a real website).
-export function Browser({ dragHandleProps, lights, article }: { dragHandleProps: DragHandleProps; lights: React.ReactNode; article: CaseStudy }) {
+export function Browser({
+  dragHandleProps,
+  lights,
+  article,
+  onBack,
+  onForward,
+}: {
+  dragHandleProps: DragHandleProps;
+  lights: React.ReactNode;
+  article: CaseStudy;
+  /** Go to the previous / next project's page; leave undefined to disable the arrow. */
+  onBack?: () => void;
+  onForward?: () => void;
+}) {
   return (
     <div className="flex h-full flex-col bg-white">
       {/* Unified toolbar: traffic lights, back/forward, address field, actions */}
       <div {...dragHandleProps} className="flex h-[52px] shrink-0 select-none items-center gap-3 border-b border-black/[0.08] bg-[#f5f5f7] px-[14px]">
         {lights}
         <div className={`ml-2 flex h-8 items-center rounded-full px-1 ${glass}`} onPointerDown={(e) => e.stopPropagation()}>
-          <button type="button" aria-label="Back" className="flex h-7 w-7 items-center justify-center rounded-full text-black/30" disabled>
+          <button
+            type="button"
+            aria-label="Previous project"
+            title="Previous project"
+            onClick={onBack}
+            disabled={!onBack}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-black/70 hover:bg-black/5 disabled:text-black/25 disabled:hover:bg-transparent"
+          >
             <ChevronLeftIcon className="h-4 w-4" />
           </button>
-          <button type="button" aria-label="Forward" className="flex h-7 w-7 items-center justify-center rounded-full text-black/30" disabled>
+          <button
+            type="button"
+            aria-label="Next project"
+            title="Next project"
+            onClick={onForward}
+            disabled={!onForward}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-black/70 hover:bg-black/5 disabled:text-black/25 disabled:hover:bg-transparent"
+          >
             <ChevronRightIcon className="h-4 w-4" />
           </button>
         </div>

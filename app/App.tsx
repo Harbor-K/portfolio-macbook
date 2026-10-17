@@ -27,7 +27,8 @@ type WindowName = BaseWindow | CaseWindow;
 const caseWindow = (title: string): CaseWindow => `case:${title}`;
 const isCase = (name: WindowName): name is CaseWindow => name.startsWith("case:");
 const caseTitle = (name: CaseWindow) => name.slice(5);
-const caseWindows: CaseWindow[] = Object.keys(caseStudies).map(caseWindow);
+const caseOrder = Object.keys(caseStudies); // Trust Bank → GameCove → UTrada → ETO Markets
+const caseWindows: CaseWindow[] = caseOrder.map(caseWindow);
 
 type ScreenInit = {
   openWindows?: Partial<Record<string, boolean>>;
@@ -37,7 +38,6 @@ type ScreenInit = {
 
 const windowTitles: Record<BaseWindow, string> = { projects: "Projects", about: "Photo Booth", cv: "CV.pdf", reminders: "Reminders", notes: "Notes", settings: "System Settings", spinit: "Spin it" };
 const appNames: Record<BaseWindow, string> = { projects: "Finder", about: "Photo Booth", cv: "Preview", reminders: "Reminders", notes: "Notes", settings: "System Settings", spinit: "Spin it" };
-const titleOf = (name: WindowName) => (isCase(name) ? caseTitle(name) : windowTitles[name]);
 const appNameOf = (name: WindowName) => (isCase(name) ? "Safari" : appNames[name]);
 
 // Menu order follows Apple HIG > The menu bar (app menu, File, Edit, View, Window, Help).
@@ -112,9 +112,9 @@ const dockThumbs: Record<BaseWindow, React.ReactNode> = {
   settings: <img src={settingsIcon} alt="" className="h-[46px] w-[46px] object-contain" draggable={false} />,
   spinit: <img src={spinItIcon} alt="" className="h-[46px] w-[46px] object-contain" draggable={false} />,
 };
-const thumbOf = (name: WindowName) =>
+const thumbOf = (name: WindowName, page?: string) =>
   isCase(name) ? (
-    <img src={caseStudies[caseTitle(name)].logo} alt="" className="h-[38px] w-[52px] rounded-[4px] object-cover shadow-[0_2px_5px_rgba(0,0,0,0.3)]" draggable={false} />
+    <img src={caseStudies[page ?? caseTitle(name)].logo} alt="" className="h-[38px] w-[52px] rounded-[4px] object-cover shadow-[0_2px_5px_rgba(0,0,0,0.3)]" draggable={false} />
   ) : (
     dockThumbs[name]
   );
@@ -180,6 +180,9 @@ export function App() {
     about: 30,
   });
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
+  // The page each case-study window is currently showing (the Safari arrows step through the projects).
+  const [casePage, setCasePage] = useState<Record<string, string>>({});
+  const pageOf = (name: CaseWindow) => casePage[name] ?? caseTitle(name);
   const [llmOpen, setLlmOpen] = useState(false);
   // Every visit starts in Light mode; Dark/Auto apply only until the page is reloaded.
   const [theme, setTheme] = useState<ThemeSetting>("light");
@@ -247,7 +250,7 @@ export function App() {
 
   const minimizedInDock: MinimizedWindow[] = minimizeOrder
     .filter((name) => openWindows[name])
-    .map((name) => ({ id: name, title: titleOf(name), thumb: thumbOf(name), onRestore: () => restoreWindow(name) }));
+    .map((name) => ({ id: name, title: isCase(name) ? pageOf(name) : windowTitles[name], thumb: thumbOf(name, isCase(name) ? pageOf(name) : undefined), onRestore: () => restoreWindow(name) }));
 
   const windowProps = (name: WindowName) => ({
     isActive: activeWindow === name,
@@ -277,7 +280,10 @@ export function App() {
   // A project with a mock article opens it in the Safari-style window; others open the Projects window.
   function openProject(project: Project) {
     if (project.opensArticle && caseStudies[project.title]) {
-      openWindow(caseWindow(project.title));
+      const name = caseWindow(project.title);
+      // Re-opening a project shows its own page again, even if the window had been arrowed elsewhere.
+      setCasePage((current) => ({ ...current, [name]: project.title }));
+      openWindow(name);
     } else {
       openWindow("projects");
     }
@@ -450,10 +456,13 @@ export function App() {
         {caseWindows.map((name) => {
           if (!openWindows[name]) return null;
           const frame = sideWindowFrame(stackFor(name));
+          const page = pageOf(name);
+          const index = caseOrder.indexOf(page);
+          const goTo = (i: number) => () => setCasePage((current) => ({ ...current, [name]: caseOrder[i] }));
           return (
             <MacWindow
               key={name}
-              title={caseTitle(name)}
+              title={page}
               initialPosition={frame.position}
               initialSize={frame.size}
               widthClassName=""
@@ -461,7 +470,15 @@ export function App() {
               minSize={{ w: 600, h: 360 }}
               {...windowProps(name)}
             >
-              {({ dragHandleProps, lights }) => <Browser dragHandleProps={dragHandleProps} lights={lights} article={caseStudies[caseTitle(name)]} />}
+              {({ dragHandleProps, lights }) => (
+                <Browser
+                  dragHandleProps={dragHandleProps}
+                  lights={lights}
+                  article={caseStudies[page]}
+                  onBack={index > 0 ? goTo(index - 1) : undefined}
+                  onForward={index < caseOrder.length - 1 ? goTo(index + 1) : undefined}
+                />
+              )}
             </MacWindow>
           );
         })}
