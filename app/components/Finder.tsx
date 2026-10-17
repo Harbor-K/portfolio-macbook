@@ -127,7 +127,7 @@ export function Finder({
                         />
                       </span>
                       <span className={`flex max-w-[110px] items-center gap-1 rounded-[4px] px-1.5 py-px text-[12px] leading-[15px] ${isSel ? "bg-[color:var(--system-blue)] text-white" : "text-black/85"}`}>
-                        <span className="h-[7px] w-[7px] shrink-0 rounded-full ring-1 ring-white/70" style={{ background: tagColorFor(index) }} />
+                        <span className="h-[8px] w-[8px] shrink-0 rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.45)]" style={{ background: tagColorFor(index) }} />
                         <span className="truncate">{project.title}</span>
                       </span>
                     </button>

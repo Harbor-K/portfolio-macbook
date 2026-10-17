@@ -6,6 +6,7 @@ import { MacWindow, type WindowSize } from "./components/MacWindow";
 import { PhotoBooth } from "./components/PhotoBooth";
 import { Preview } from "./components/Preview";
 import { Browser } from "./components/Browser";
+import { caseStudies } from "./data/caseStudies";
 import { KimLLM } from "./components/KimLLM";
 import { Reminders } from "./components/Reminders";
 import { Notes } from "./components/Notes";
@@ -154,6 +155,9 @@ export function App() {
   const [windowOrder, setWindowOrder] = useState<Record<WindowName, number>>({ projects: 20, about: 30, cv: 25, article: 26, reminders: 27, notes: 28, settings: 29, spinit: 19 });
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
   const [llmOpen, setLlmOpen] = useState(false);
+  // Which project's case study the Safari window shows.
+  const [articleKey, setArticleKey] = useState("Trust Bank");
+  const article = caseStudies[articleKey] ?? caseStudies["Trust Bank"];
   // Every visit starts in Light mode; Dark/Auto apply only until the page is reloaded.
   const [theme, setTheme] = useState<ThemeSetting>("light");
   const [wallpaperId, setWallpaperId] = useState(() => {
@@ -220,7 +224,7 @@ export function App() {
 
   const minimizedInDock: MinimizedWindow[] = minimizeOrder
     .filter((name) => openWindows[name])
-    .map((name) => ({ id: name, title: windowTitles[name], thumb: dockThumbs[name], onRestore: () => restoreWindow(name) }));
+    .map((name) => ({ id: name, title: name === "article" ? articleKey : windowTitles[name], thumb: name === "article" ? <img src={article.logo} alt="" className="h-[38px] w-[52px] rounded-[4px] object-cover shadow-[0_2px_5px_rgba(0,0,0,0.3)]" draggable={false} /> : dockThumbs[name], onRestore: () => restoreWindow(name) }));
 
   const windowProps = (name: WindowName) => ({
     isActive: activeWindow === name,
@@ -250,7 +254,12 @@ export function App() {
 
   // A project with a mock article opens it in the Safari-style window; others open the Projects window.
   function openProject(project: Project) {
-    openWindow(project.opensArticle ? "article" : "projects");
+    if (project.opensArticle && caseStudies[project.title]) {
+      setArticleKey(project.title);
+      openWindow("article");
+    } else {
+      openWindow("projects");
+    }
   }
 
   return (
@@ -418,7 +427,7 @@ export function App() {
 
         {openWindows.article && (
           <MacWindow
-            title="Trust Bank"
+            title={articleKey}
             initialPosition={articleFrame.position}
             initialSize={articleFrame.size}
             widthClassName=""
@@ -426,7 +435,7 @@ export function App() {
             minSize={{ w: 600, h: 360 }}
             {...windowProps("article")}
           >
-            {({ dragHandleProps, lights }) => <Browser dragHandleProps={dragHandleProps} lights={lights} />}
+            {({ dragHandleProps, lights }) => <Browser dragHandleProps={dragHandleProps} lights={lights} article={article} />}
           </MacWindow>
         )}
 
@@ -568,11 +577,11 @@ function ProjectIcon({
         />
       </span>
       <span
-        className={`flex max-w-[104px] items-center gap-1 rounded-[4px] px-1.5 py-px text-[12px] font-semibold leading-[15px] ${
+        className={`flex max-w-[104px] items-center gap-1 rounded-[4px] px-1.5 py-px text-[12px] font-bold leading-[15px] ${
           selected ? "bg-[color:var(--system-blue)] text-white" : "text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_6px_rgba(0,0,0,0.5)]"
         }`}
       >
-        <span className="h-[7px] w-[7px] shrink-0 rounded-full ring-1 ring-white/80" style={{ background: tagColor }} aria-hidden="true" />
+        <span className="h-[9px] w-[9px] shrink-0 rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.55),0_0_4px_rgba(0,0,0,0.25)]" style={{ background: tagColor }} aria-hidden="true" />
         <span className="truncate">{title}</span>
       </span>
     </button>

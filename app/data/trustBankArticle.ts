@@ -1,6 +1,8 @@
 // Mock article landing page for the Trust Bank case study, shown inside the Safari-style window.
 // Placeholder copy: replace the text below with the real case study when it is ready.
-export const trustBankArticle = {
+import type { CaseStudy } from "./caseStudies";
+
+export const trustBankArticle: CaseStudy = {
   url: "harbor.design/work/trust-bank",
   tabTitle: "Trust Bank — Case Study",
   brandColor: "#459BD7",

@@ -36,7 +36,7 @@ export function DesktopIcon({ label, kind, className = "", imageSrc, fallbackSrc
         <IconGlyph kind={kind} imageSrc={imageSrc} fallbackSrc={fallbackSrc} />
       </span>
       <span
-        className={`max-w-[104px] rounded-[4px] px-1.5 py-px text-[12px] font-semibold leading-[15px] ${
+        className={`max-w-[104px] rounded-[4px] px-1.5 py-px text-[12px] font-bold leading-[15px] ${
           selected ? "bg-[color:var(--system-blue)] text-white" : "text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_6px_rgba(0,0,0,0.5)]"
         }`}
       >

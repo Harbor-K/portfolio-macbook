@@ -1,13 +1,13 @@
 import React from "react";
 import { ChevronLeftIcon, ChevronRightIcon, LockIcon, PlusIcon, RotateCwIcon, ShareIcon } from "lucide-react";
 import type { DragHandleProps } from "./MacWindow";
-import { trustBankArticle as article } from "../data/trustBankArticle";
+import type { CaseStudy } from "../data/caseStudies";
 
 const glass =
   "bg-white/70 shadow-[0_1px_3px_rgba(0,0,0,0.08),inset_0_0_0_0.5px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-xl";
 
-// A Safari-style window showing a mock article landing page (not a real website).
-export function Browser({ dragHandleProps, lights }: { dragHandleProps: DragHandleProps; lights: React.ReactNode }) {
+// A Safari-style window showing a mock case-study page (not a real website).
+export function Browser({ dragHandleProps, lights, article }: { dragHandleProps: DragHandleProps; lights: React.ReactNode; article: CaseStudy }) {
   return (
     <div className="flex h-full flex-col bg-white">
       {/* Unified toolbar: traffic lights, back/forward, address field, actions */}
@@ -40,9 +40,9 @@ export function Browser({ dragHandleProps, lights }: { dragHandleProps: DragHand
       </div>
 
       {/* Page */}
-      <div data-keep-light="" className="min-h-0 flex-1 select-text overflow-auto bg-white text-[#1d1d1f]">
+      <div key={article.url} data-keep-light="" className="min-h-0 flex-1 select-text overflow-auto bg-white text-[#1d1d1f]">
         <header className="px-10 pb-12 pt-10 text-white" style={{ background: article.brandColor }}>
-          <img src={article.logo} alt="Trust" className="h-[44px] w-auto rounded-[4px]" draggable={false} />
+          <img src={article.logo} alt="" className={article.logoClassName ?? "h-[44px] w-auto rounded-[4px]"} draggable={false} />
           <p className="mt-10 text-[12px] font-semibold uppercase tracking-[0.1em] text-white/80">{article.eyebrow}</p>
           <h1 className="mt-3 max-w-[640px] text-[34px] font-bold leading-[1.12] tracking-[-0.02em]">{article.title}</h1>
           <p className="mt-4 max-w-[600px] text-[16px] leading-[1.5] text-white/90">{article.summary}</p>
