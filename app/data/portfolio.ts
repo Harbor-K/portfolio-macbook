@@ -17,4 +17,7 @@ export const projects: Project[] = [
     imageFit: "contain",
     imageBg: "#459BD7",
   },
+  { title: "GameCove", image: "https://cdn.jsdelivr.net/gh/Harbor-K/portfolio-macbook@50ff72b39d94c3a56d4f32656517a21f7813b82d/icons/gamecove.png", imageFit: "cover", imageBg: "#0e0e10" },
+  { title: "UTrada", image: "https://cdn.jsdelivr.net/gh/Harbor-K/portfolio-macbook@ad38c9750f7951e663fc0bbe7737753291180c2f/icons/utrada.png", imageFit: "cover", imageBg: "#8300d5" },
+  { title: "ETO Markets", image: "https://cdn.jsdelivr.net/gh/Harbor-K/portfolio-macbook@ad38c9750f7951e663fc0bbe7737753291180c2f/icons/eto-markets.png", imageFit: "cover", imageBg: "#ffffff" },
 ];
