@@ -11,7 +11,12 @@ export type Wallpaper = {
   objectPosition: string;
   /** brightness above 1 lightens the photo. */
   filter: string;
+  /** Optional real night photo of the same place. Without it, dark mode turns the day photo into night with a filter. */
+  nightSrc?: string;
 };
+
+// How a day photo is turned into night in dark mode (used when a wallpaper has no nightSrc).
+export const nightFilter = "brightness(0.42) saturate(0.7) contrast(1.08) hue-rotate(-10deg)";
 
 // Shown in System Settings > Wallpaper, in this order. Add more here.
 export const wallpapers: Wallpaper[] = [

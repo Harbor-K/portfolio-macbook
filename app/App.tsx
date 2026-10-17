@@ -16,7 +16,7 @@ import { type DockApp, dockSections, settingsIcon, spinItIcon } from "./data/doc
 import { projects, type Project } from "./data/portfolio";
 import { archiveBookIcon, cvPdfIcon, notesIcon, projectFolderIcon } from "./data/projectFolderIcon";
 import { tagColorFor } from "./data/tags";
-import { defaultWallpaperId, wallpapers } from "./data/wallpaper";
+import { defaultWallpaperId, nightFilter, wallpapers } from "./data/wallpaper";
 import { useScreenInit } from "./useScreenInit.js";
 
 type WindowName = "projects" | "about" | "cv" | "article" | "reminders" | "notes" | "settings" | "spinit";
@@ -257,14 +257,67 @@ export function App() {
   return (
     <main className={`relative h-screen w-full overflow-hidden text-[13px] leading-4 ${isDark ? "theme-dark" : ""}`}>
       <div className="relative h-full min-w-[1040px] overflow-hidden" onClick={() => setSelectedIcon(null)}>
-        <img
-          key={wallpaper.id}
-          src={wallpaper.src}
-          alt=""
-          className="absolute inset-0 h-full w-full animate-[wallpaperIn_400ms_ease-out] select-none object-cover"
-          style={{ objectPosition: wallpaper.objectPosition, filter: wallpaper.filter }}
-          draggable={false}
-        />
+        {/* Wallpaper. In dark mode it fades from day to night over ~1.6 s: the photo dims and cools,
+            a navy sky wash and a few stars fade in. A wallpaper with its own nightSrc crossfades to that photo instead. */}
+        <div key={wallpaper.id} className="absolute inset-0 animate-[wallpaperIn_400ms_ease-out]">
+          <img
+            src={wallpaper.src}
+            alt=""
+            className="absolute inset-0 h-full w-full select-none object-cover transition-[filter] duration-[1600ms] ease-in-out"
+            style={{ objectPosition: wallpaper.objectPosition, filter: isDark && !wallpaper.nightSrc ? nightFilter : wallpaper.filter }}
+            draggable={false}
+          />
+          {wallpaper.nightSrc ? (
+            <img
+              src={wallpaper.nightSrc}
+              alt=""
+              className="absolute inset-0 h-full w-full select-none object-cover transition-opacity duration-[1600ms] ease-in-out"
+              style={{ objectPosition: wallpaper.objectPosition, opacity: isDark ? 1 : 0 }}
+              draggable={false}
+            />
+          ) : (
+            <>
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 mix-blend-multiply transition-opacity duration-[1600ms] ease-in-out"
+                style={{ opacity: isDark ? 1 : 0, background: "linear-gradient(180deg, rgba(18,28,78,0.85) 0%, rgba(28,36,90,0.6) 45%, rgba(20,24,48,0.55) 100%)" }}
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 top-0 h-[55%] transition-opacity delay-500 duration-[1800ms] ease-in-out"
+                style={{
+                  opacity: isDark ? 0.9 : 0,
+                  backgroundImage: [
+                    "radial-gradient(1.2px 1.2px at 12% 18%, #fff 50%, transparent 51%)",
+                    "radial-gradient(1px 1px at 27% 9%, #fff 50%, transparent 51%)",
+                    "radial-gradient(1.4px 1.4px at 41% 24%, #fff 50%, transparent 51%)",
+                    "radial-gradient(1px 1px at 55% 12%, #fff 50%, transparent 51%)",
+                    "radial-gradient(1.2px 1.2px at 68% 30%, #fff 50%, transparent 51%)",
+                    "radial-gradient(1px 1px at 79% 7%, #fff 50%, transparent 51%)",
+                    "radial-gradient(1.3px 1.3px at 90% 21%, #fff 50%, transparent 51%)",
+                    "radial-gradient(1px 1px at 34% 38%, #fff 50%, transparent 51%)",
+                    "radial-gradient(1px 1px at 61% 44%, #fff 50%, transparent 51%)",
+                    "radial-gradient(1.1px 1.1px at 6% 40%, #fff 50%, transparent 51%)",
+                    "radial-gradient(1px 1px at 48% 5%, #fff 50%, transparent 51%)",
+                    "radial-gradient(1px 1px at 73% 16%, #fff 50%, transparent 51%)",
+                  ].join(", "),
+                  maskImage: "linear-gradient(180deg, #000 40%, transparent 100%)",
+                  WebkitMaskImage: "linear-gradient(180deg, #000 40%, transparent 100%)",
+                }}
+              />
+              {/* Moon glow */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute left-[58%] top-[9%] h-[46px] w-[46px] rounded-full transition-opacity delay-300 duration-[1800ms] ease-in-out"
+                style={{
+                  opacity: isDark ? 1 : 0,
+                  background: "radial-gradient(circle at 40% 40%, #fffbe8, #f1e7c4 60%, #e6d9ad)",
+                  boxShadow: "0 0 30px 8px rgba(255,246,214,0.35), 0 0 90px 30px rgba(180,190,255,0.15)",
+                }}
+              />
+            </>
+          )}
+        </div>
 
         {/* Menu bar: 24 pt tall (Apple HIG > The menu bar) */}
         <header className="absolute inset-x-0 top-0 z-[100] flex h-[24px] select-none items-center justify-between bg-gradient-to-b from-black/25 to-black/5 px-[10px] text-[13px] text-white [text-shadow:0_0_4px_rgba(0,0,0,0.35)]">
