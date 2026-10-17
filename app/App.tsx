@@ -33,8 +33,8 @@ const menus = ["File", "Edit", "View", "Window", "Help"];
 // stretching down to just above the Dock and stopping short of the desktop icons.
 const photoBoothFrame = { x: 20, y: 40, w: 420, h: 368 };
 const windowGap = 16;
-const desktopIconsWidth = 250; // keep the two icon columns on the right uncovered
-const dockClearance = 72; // space left above the bottom edge for the Dock
+const desktopIconsWidth = 244; // stop just short of the two desktop icon columns on the right
+const dockClearance = 92; // end just above the Dock, with a small gap
 const cascadeStep = 24; // offset when both side windows are open, like macOS cascading
 
 function sideWindowFrame(cascade: boolean): { position: { x: number; y: number }; size: WindowSize } {
@@ -43,7 +43,7 @@ function sideWindowFrame(cascade: boolean): { position: { x: number; y: number }
   const offset = cascade ? cascadeStep : 0;
   const x = photoBoothFrame.x + photoBoothFrame.w + windowGap + offset;
   const y = photoBoothFrame.y + offset;
-  const w = Math.max(600, Math.min(860, viewportW - x - desktopIconsWidth));
+  const w = Math.max(600, viewportW - x - desktopIconsWidth);
   const h = Math.max(320, viewportH - y - dockClearance);
   return { position: { x, y }, size: { w, h } };
 }
