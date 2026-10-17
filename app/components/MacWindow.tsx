@@ -53,35 +53,28 @@ export function TrafficLights({
   onMinimize?: () => void;
   onZoom?: () => void;
 }) {
-  const base = "flex h-3 w-3 items-center justify-center rounded-full transition-colors";
+  // 14px dots (up from 12px) inside 22px hit areas, so they are easy to click while the dots keep 8px gaps.
+  const hit = "flex h-[22px] w-[22px] items-center justify-center rounded-full outline-none";
+  const base = "flex h-[14px] w-[14px] items-center justify-center rounded-full transition-colors";
   const off = dark ? "bg-[#48484a]" : "bg-[#d1d1d6]";
-  const glyph = "h-[8px] w-[8px] opacity-0 transition-opacity group-hover:opacity-100";
+  const glyph = "h-[9px] w-[9px] opacity-0 transition-opacity group-hover:opacity-100";
   const ZoomGlyph = zoomed ? Minimize2Icon : Maximize2Icon;
   return (
-    <div className="group relative z-10 flex items-center gap-2" onPointerDown={(event) => event.stopPropagation()} onDoubleClick={(event) => event.stopPropagation()}>
-      <button
-        type="button"
-        aria-label={`Close ${title}`}
-        onClick={onClose}
-        className={`${base} ${isActive ? "bg-[#ff5f57] shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.18)]" : `${off} group-hover:bg-[#ff5f57]`}`}
-      >
-        <XIcon className={`${glyph} text-[#7a0b06]`} strokeWidth={3.2} />
+    <div className="group relative z-10 -mx-[4px] flex items-center" onPointerDown={(event) => event.stopPropagation()} onDoubleClick={(event) => event.stopPropagation()}>
+      <button type="button" aria-label={`Close ${title}`} onClick={onClose} className={hit}>
+        <span className={`${base} ${isActive ? "bg-[#ff5f57] shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.18)]" : `${off} group-hover:bg-[#ff5f57]`}`}>
+          <XIcon className={`${glyph} text-[#7a0b06]`} strokeWidth={3.2} />
+        </span>
       </button>
-      <button
-        type="button"
-        aria-label={`Minimize ${title}`}
-        onClick={onMinimize}
-        className={`${base} ${isActive ? "bg-[#febc2e] shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.18)]" : `${off} group-hover:bg-[#febc2e]`}`}
-      >
-        <MinusIcon className={`${glyph} text-[#8a5a00]`} strokeWidth={3.2} />
+      <button type="button" aria-label={`Minimize ${title}`} onClick={onMinimize} className={hit}>
+        <span className={`${base} ${isActive ? "bg-[#febc2e] shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.18)]" : `${off} group-hover:bg-[#febc2e]`}`}>
+          <MinusIcon className={`${glyph} text-[#8a5a00]`} strokeWidth={3.2} />
+        </span>
       </button>
-      <button
-        type="button"
-        aria-label={zoomed ? `Exit full screen` : `Enter full screen`}
-        onClick={onZoom}
-        className={`${base} ${isActive ? "bg-[#28c840] shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.18)]" : `${off} group-hover:bg-[#28c840]`}`}
-      >
-        <ZoomGlyph className={`${glyph} text-[#0a5c14]`} strokeWidth={3} />
+      <button type="button" aria-label={zoomed ? `Exit full screen` : `Enter full screen`} onClick={onZoom} className={hit}>
+        <span className={`${base} ${isActive ? "bg-[#28c840] shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.18)]" : `${off} group-hover:bg-[#28c840]`}`}>
+          <ZoomGlyph className={`${glyph} text-[#0a5c14]`} strokeWidth={3} />
+        </span>
       </button>
     </div>
   );
