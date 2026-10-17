@@ -8,7 +8,7 @@ import { PhotoBooth } from "./components/PhotoBooth";
 import { Preview } from "./components/Preview";
 import { aboutIcon, aboutPortrait, aboutVideo } from "./data/aboutVideo";
 import { type DockApp, dockSections } from "./data/dock";
-import { projects } from "./data/portfolio";
+import { openProject, projects, type Project } from "./data/portfolio";
 import { archiveBookIcon, projectFolderIcon } from "./data/projectFolderIcon";
 import { tagColorFor } from "./data/tags";
 import { wallpaper, wallpaperStyle } from "./data/wallpaper";
@@ -174,12 +174,11 @@ export function App() {
             {projects.map((project, index) => (
               <ProjectIcon
                 key={project.title}
-                title={project.title}
-                image={project.image}
+                project={project}
                 tagColor={tagColorFor(index)}
                 selected={selectedIcon === project.title}
                 onSelect={() => setSelectedIcon(project.title)}
-                onOpen={() => openWindow("projects")}
+                onOpen={() => openProject(project, () => openWindow("projects"))}
               />
             ))}
           </div>
@@ -257,20 +256,19 @@ export function App() {
 }
 
 function ProjectIcon({
-  title,
-  image,
+  project,
   tagColor,
   selected,
   onSelect,
   onOpen,
 }: {
-  title: string;
-  image: string;
+  project: Project;
   tagColor: string;
   selected: boolean;
   onSelect: () => void;
   onOpen: () => void;
 }) {
+  const { title, image } = project;
   return (
     <button
       type="button"
@@ -286,7 +284,13 @@ function ProjectIcon({
       className="flex w-[104px] flex-col items-center gap-[5px] px-1 py-1 text-center outline-none"
     >
       <span className={`flex h-[68px] w-[96px] items-center justify-center rounded-[6px] ${selected ? "bg-black/25 ring-1 ring-white/25" : ""}`}>
-        <img src={image} alt="" className="h-[50px] w-[80px] rounded-[2px] object-cover shadow-[0_2px_6px_rgba(0,0,0,0.35),0_0_0_2px_#fff]" draggable={false} />
+        <img
+          src={image}
+          alt=""
+          className={`h-[50px] w-[80px] rounded-[2px] shadow-[0_2px_6px_rgba(0,0,0,0.35),0_0_0_2px_#fff] ${project.imageFit === "contain" ? "object-contain" : "object-cover"}`}
+          style={project.imageBg ? { background: project.imageBg } : undefined}
+          draggable={false}
+        />
       </span>
       <span
         className={`flex max-w-[104px] items-center gap-1 rounded-[4px] px-1.5 py-px text-[12px] font-medium leading-[15px] ${

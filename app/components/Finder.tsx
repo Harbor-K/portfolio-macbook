@@ -11,7 +11,7 @@ import {
   SearchIcon,
 } from "lucide-react";
 import type { DragHandleProps } from "./MacWindow";
-import { projects } from "../data/portfolio";
+import { openProject, projects } from "../data/portfolio";
 import { tagColorFor } from "../data/tags";
 
 const favorites = [
@@ -107,10 +107,16 @@ export function Finder({ dragHandleProps, lights }: { dragHandleProps: DragHandl
                         e.stopPropagation();
                         setSelected(project.title);
                       }}
+                      onDoubleClick={() => openProject(project, () => undefined)}
                       className="flex w-full flex-col items-center gap-1.5 outline-none"
                     >
                       <span className={`flex h-[76px] w-[100px] items-center justify-center rounded-[8px] ${isSel ? "bg-black/[0.08]" : ""}`}>
-                        <img src={project.image} alt="" className="h-[58px] w-[84px] rounded-[3px] object-cover shadow-[0_1px_3px_rgba(0,0,0,0.25),0_0_0_0.5px_rgba(0,0,0,0.15)]" />
+                        <img
+                          src={project.image}
+                          alt=""
+                          className={`h-[58px] w-[84px] rounded-[3px] shadow-[0_1px_3px_rgba(0,0,0,0.25),0_0_0_0.5px_rgba(0,0,0,0.15)] ${project.imageFit === "contain" ? "object-contain" : "object-cover"}`}
+                          style={project.imageBg ? { background: project.imageBg } : undefined}
+                        />
                       </span>
                       <span className={`flex max-w-[110px] items-center gap-1 rounded-[4px] px-1.5 py-px text-[12px] leading-[15px] ${isSel ? "bg-[color:var(--system-blue)] text-white" : "text-black/85"}`}>
                         <span className="h-[7px] w-[7px] shrink-0 rounded-full ring-1 ring-white/70" style={{ background: tagColorFor(index) }} />
@@ -142,7 +148,12 @@ export function Finder({ dragHandleProps, lights }: { dragHandleProps: DragHandl
                       className={`cursor-default ${isSel ? "bg-[color:var(--system-blue)] text-white" : index % 2 ? "bg-black/[0.03]" : ""}`}
                     >
                       <td className="flex items-center gap-2 rounded-l-[6px] py-1 pl-2">
-                        <img src={project.image} alt="" className="h-4 w-5 rounded-[2px] object-cover" />
+                        <img
+                          src={project.image}
+                          alt=""
+                          className={`h-4 w-5 rounded-[2px] ${project.imageFit === "contain" ? "object-contain" : "object-cover"}`}
+                          style={project.imageBg ? { background: project.imageBg } : undefined}
+                        />
                         {project.title}
                       </td>
                       <td className={`rounded-r-[6px] py-1 ${isSel ? "text-white/80" : "text-black/45"}`}>Case study</td>
