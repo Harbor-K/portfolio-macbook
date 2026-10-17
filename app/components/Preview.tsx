@@ -69,9 +69,10 @@ export function Preview({ dragHandleProps, lights, zoomed }: { dragHandleProps: 
             title="Download PDF"
             onClick={downloadPdf}
             disabled={downloading}
-            className={`flex h-8 w-9 items-center justify-center rounded-full text-black/70 transition-opacity hover:text-black/90 disabled:opacity-50 ${glass}`}
+            className={`flex h-8 items-center justify-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-black/70 transition-opacity hover:text-black/90 disabled:opacity-50 ${glass}`}
           >
             <DownloadIcon className="h-[15px] w-[15px]" />
+            Download
           </button>
         </div>
       </div>

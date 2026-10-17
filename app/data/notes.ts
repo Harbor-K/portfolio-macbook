@@ -7,7 +7,11 @@ export type Note = {
   subtitle: string;
   date: string; // ISO date
   body: string[]; // one entry per paragraph
+  images?: { src: string; alt: string }[]; // shown under the text
 };
+
+// Note photos, hosted in Harbor-K/portfolio-macbook (notes/) via jsDelivr, pinned to a commit.
+const photo = "https://cdn.jsdelivr.net/gh/Harbor-K/portfolio-macbook@863bba2bce832a7e0b8d3d70d58321693c7145e4/notes";
 
 export const notesFolder = "Notes";
 
@@ -39,15 +43,19 @@ export const notes: Note[] = [
     ],
   },
   {
-    id: "ai",
-    file: "artificial_intelligence.md",
-    title: "Designing alongside AI",
-    subtitle: "How I use AI tools without letting them do the thinking.",
+    id: "fun-fact",
+    file: "fun_fact.md",
+    title: "Fun fact",
+    subtitle: "A British food lover, one toast at a time.",
     date: "2025-06-21T21:05:00",
     body: [
-      "I use AI design tools to **explore more directions, faster** — rough layouts, copy variations, quick prototypes to test an idea before I commit to it.",
-      "What I don't hand over is judgment. Deciding which problem matters, and whether a solution is honest and clear for the person using it, is still the designer's job.",
-      "The best results come from treating AI as a sharp, tireless collaborator: useful for breadth, and always checked against real users and real data.",
+      "I'm a **British food lover**. Whenever I'm working at my computer, there's always a coffee and something sweet next to the keyboard.",
+      "But my absolute favourite food is **Bovril and butter on toast**. Hot toast, a thick layer of butter, then a thin swirl of Bovril on top — salty, rich and perfect.",
+      "I could happily eat it for the rest of my life, and if I could choose my very last meal, **it would be this**.",
+    ],
+    images: [
+      { src: `${photo}/bovril-jar.jpg`, alt: "A jar of Bovril beef paste held up in a UK supermarket" },
+      { src: `${photo}/bovril-toast.jpg`, alt: "A slice of toast spread with butter and Bovril" },
     ],
   },
 ];
