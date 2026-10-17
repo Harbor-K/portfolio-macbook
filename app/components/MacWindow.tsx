@@ -120,26 +120,65 @@ export function MacWindow({
   const [size, setSize] = useState<WindowSize | null>(initialSize ?? null);
   const [zoomed, setZoomed] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const [dockTransform, setDockTransform] = useState<string | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const dragOrigin = useRef<{ pointerX: number; pointerY: number; windowX: number; windowY: number } | null>(null);
   const resizeOrigin = useRef<{ edge: ResizeEdge; pointerX: number; pointerY: number; x: number; y: number; w: number; h: number } | null>(null);
   const isDark = appearance === "dark";
 
-  // Minimize: shrink the window toward the Dock (bottom centre of the desktop), then hide it.
+  // Minimize / restore with a macOS-style Genie effect: the window funnels down into its slot
+  // in the Dock (and pours back out on restore). Uses the Web Animations API so it can follow
+  // the real Dock position, and falls back to a short fade when the visitor prefers reduced motion.
+  const wasMinimized = useRef(minimized);
+  const genieRef = useRef<Animation | null>(null);
   useLayoutEffect(() => {
     const el = sectionRef.current;
-    if (!minimized || !el) {
-      setDockTransform(null);
-      return;
-    }
-    const parent = el.offsetParent as HTMLElement | null;
+    if (!el || wasMinimized.current === minimized) return;
+    wasMinimized.current = minimized;
+    genieRef.current?.cancel();
+
     const box = el.getBoundingClientRect();
-    const area = parent?.getBoundingClientRect() ?? { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
-    const dx = area.left + area.width / 2 - (box.left + box.width / 2);
-    const dy = area.top + area.height - 44 - (box.top + box.height / 2);
-    setDockTransform(`translate(${dx}px, ${dy}px) scale(0.06)`);
-  }, [minimized]);
+    const dock = document.querySelector('nav[aria-label="Dock"]');
+    const slot = minimized ? document.querySelector(`nav[aria-label="Dock"] button[aria-label="Restore ${title}"]`) : null;
+    const slotBox = slot?.getBoundingClientRect();
+    const dockBox = dock?.getBoundingClientRect();
+    // Where the window lands: its own Dock thumbnail when minimizing; the Dock's right end when
+    // restoring (the thumbnail has already been removed by then, and that is where it was).
+    const targetX = slotBox ? slotBox.left + slotBox.width / 2 : dockBox ? dockBox.right - 4 : window.innerWidth / 2;
+    const targetY = slotBox ? slotBox.top + slotBox.height / 2 : dockBox ? dockBox.top + dockBox.height / 2 : window.innerHeight - 40;
+    const dx = targetX - (box.left + box.width / 2);
+    const dy = targetY - (box.top + box.height / 2);
+    // Horizontal point (as % of the window width) the bottom edge funnels toward.
+    const f = Math.min(100, Math.max(0, ((targetX - box.left) / box.width) * 100));
+    const pct = (n: number) => `${n.toFixed(1)}%`;
+    const full = "polygon(-10% -10%, 110% -10%, 110% 110%, -10% 110%)";
+    const funnel = (top: number, bottom: number) =>
+      `polygon(${pct(-10 + (f + 10) * top)} -10%, ${pct(110 - (110 - f) * top)} -10%, ${pct(f + bottom)} 110%, ${pct(f - bottom)} 110%)`;
+
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const frames: Keyframe[] = reduceMotion
+      ? [
+          { opacity: 1, transform: "none" },
+          { opacity: 0, transform: "scale(0.96)" },
+        ]
+      : [
+          { offset: 0, transform: "translate(0px, 0px) scale(1, 1)", clipPath: full, opacity: 1 },
+          // The bottom edge pinches toward the Dock first, while the top barely moves.
+          { offset: 0.35, transform: `translate(${dx * 0.08}px, ${dy * 0.12}px) scale(1, 0.96)`, clipPath: funnel(0.05, 14), opacity: 1 },
+          // Then the whole window is drawn down the funnel.
+          { offset: 0.7, transform: `translate(${dx * 0.6}px, ${dy * 0.7}px) scale(0.45, 0.4)`, clipPath: funnel(0.55, 6), opacity: 1 },
+          { offset: 1, transform: `translate(${dx}px, ${dy}px) scale(0.06, 0.06)`, clipPath: funnel(0.9, 2), opacity: 0 },
+        ];
+
+    const animation = el.animate(frames, {
+      duration: reduceMotion ? 180 : 560,
+      easing: minimized ? "cubic-bezier(0.55, 0, 0.7, 0.25)" : "cubic-bezier(0.3, 0.75, 0.45, 1)",
+      direction: minimized ? "normal" : "reverse",
+      fill: "forwards",
+    });
+    genieRef.current = animation;
+    // After restoring, drop the finished animation so the window's normal styles take over again.
+    if (!minimized) animation.onfinish = () => animation.cancel();
+  }, [minimized, title]);
 
   // Esc leaves full screen, like macOS.
   useEffect(() => {
@@ -240,16 +279,11 @@ export function MacWindow({
     <section
       ref={sectionRef}
       className={`absolute flex flex-col overflow-hidden ${zoomed ? "rounded-none" : "rounded-[12px]"} ${
-        dragging ? "" : "transition-[left,top,width,height,transform,opacity,border-radius] duration-[350ms] ease-[cubic-bezier(.2,.8,.2,1)]"
+        dragging ? "" : "transition-[left,top,width,height,border-radius] duration-[350ms] ease-[cubic-bezier(.2,.8,.2,1)]"
       } ${isDark ? "bg-[#1c1c1e] ring-1 ring-white/10" : "bg-[#e8e6e3] ring-1 ring-black/15"} ${
         isActive ? "shadow-[0_28px_70px_rgba(0,0,0,0.30),0_4px_14px_rgba(0,0,0,0.14)]" : "shadow-[0_14px_36px_rgba(0,0,0,0.18)]"
       } ${zoomed ? "" : widthClassName} ${minimized ? "pointer-events-none" : ""}`}
-      style={{
-        ...frameStyle,
-        transform: minimized && dockTransform ? dockTransform : undefined,
-        opacity: minimized ? 0 : 1,
-        transformOrigin: "center center",
-      }}
+      style={{ ...frameStyle, transformOrigin: "center center" }}
       aria-label={title}
       aria-hidden={minimized}
       onPointerDown={onFocus}
