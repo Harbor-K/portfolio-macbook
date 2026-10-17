@@ -147,7 +147,7 @@ export function App() {
     reminders: screenInit.openWindows?.reminders ?? false,
     notes: screenInit.openWindows?.notes ?? false,
     settings: screenInit.openWindows?.settings ?? false,
-    spinit: screenInit.openWindows?.spinit ?? true,
+    spinit: screenInit.openWindows?.spinit ?? false, // hidden at first; opens from the Dock
   });
   const [minimized, setMinimized] = useState<Record<WindowName, boolean>>({ about: false, projects: false, cv: false, article: false, reminders: false, notes: false, settings: false, spinit: false });
   const [minimizeOrder, setMinimizeOrder] = useState<WindowName[]>([]);
