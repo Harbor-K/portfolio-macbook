@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { DesktopIcon } from "./components/DesktopIcon";
 import { Dock, type MinimizedWindow } from "./components/Dock";
-import { Finder } from "./components/Finder";
+import { Finder, type FinderItem, type FinderLocation } from "./components/Finder";
 import { MacWindow, type WindowSize } from "./components/MacWindow";
 import { PhotoBooth } from "./components/PhotoBooth";
 import { Preview } from "./components/Preview";
@@ -10,6 +10,7 @@ import { caseStudies } from "./data/caseStudies";
 import { KimLLM } from "./components/KimLLM";
 import { Reminders } from "./components/Reminders";
 import { Notes } from "./components/Notes";
+import { notes } from "./data/notes";
 import { Settings, type ThemeSetting } from "./components/Settings";
 import { SpinIt } from "./components/SpinIt";
 import { aboutIcon, aboutPortrait, aboutVideo } from "./data/aboutVideo";
@@ -184,6 +185,8 @@ export function App() {
   const [casePage, setCasePage] = useState<Record<string, string>>({});
   const pageOf = (name: CaseWindow) => casePage[name] ?? caseTitle(name);
   const [llmOpen, setLlmOpen] = useState(false);
+  // Which note the Notes window opens on (set when a note is opened from Finder > Documents).
+  const [noteId, setNoteId] = useState<string | undefined>(undefined);
   // Every visit starts in Light mode; Dark/Auto apply only until the page is reloaded.
   const [theme, setTheme] = useState<ThemeSetting>("light");
   const [wallpaperId, setWallpaperId] = useState(() => {
@@ -288,6 +291,41 @@ export function App() {
       openWindow("projects");
     }
   }
+
+  function openNote(id: string) {
+    setNoteId(id);
+    openWindow("notes");
+  }
+
+  // What each Finder sidebar location contains. Double-clicking an item opens the same window as on the desktop.
+  const projectItems: FinderItem[] = projects.map((project, index) => ({
+    id: `project:${project.title}`,
+    title: project.title,
+    image: project.image,
+    look: "thumb",
+    imageFit: project.imageFit,
+    imageBg: project.imageBg,
+    tagColor: tagColorFor(index),
+    kind: "Case study",
+    onOpen: () => openProject(project),
+  }));
+  const cvItem: FinderItem = { id: "cv", title: "CV.pdf", image: cvPdfIcon, look: "icon", kind: "PDF document", onOpen: () => openWindow("cv") };
+  const finderLocations: Record<FinderLocation, FinderItem[]> = {
+    projects: projectItems,
+    desktop: [
+      ...projectItems,
+      { id: "about", title: "About", image: aboutIcon, look: "icon", kind: "Photo Booth", onOpen: () => openWindow("about") },
+      { id: "folder", title: "Projects", image: projectFolderIcon, look: "icon", kind: "Folder", onOpen: () => openWindow("projects") },
+      cvItem,
+      { id: "book", title: "Book", image: archiveBookIcon, look: "icon", kind: "Book" },
+      { id: "notes", title: "Notes", image: notesIcon, look: "icon", kind: "Application", onOpen: () => openWindow("notes") },
+    ],
+    documents: [
+      cvItem,
+      ...notes.map<FinderItem>((note) => ({ id: `note:${note.id}`, title: note.file, image: notesIcon, look: "icon", kind: "Note", onOpen: () => openNote(note.id) })),
+    ],
+    downloads: [],
+  };
 
   return (
     <main className={`relative h-screen w-full overflow-hidden text-[13px] leading-4 ${isDark ? "theme-dark" : ""}`}>
@@ -434,7 +472,7 @@ export function App() {
             minSize={{ w: 600, h: 300 }}
             {...windowProps("projects")}
           >
-            {({ dragHandleProps, lights }) => <Finder dragHandleProps={dragHandleProps} lights={lights} onOpenProject={openProject} />}
+            {({ dragHandleProps, lights }) => <Finder dragHandleProps={dragHandleProps} lights={lights} locations={finderLocations} />}
           </MacWindow>
         )}
 
@@ -507,7 +545,7 @@ export function App() {
             minSize={{ w: 760, h: 360 }}
             {...windowProps("notes")}
           >
-            {({ dragHandleProps, lights }) => <Notes dragHandleProps={dragHandleProps} lights={lights} />}
+            {({ dragHandleProps, lights }) => <Notes key={noteId ?? "default"} dragHandleProps={dragHandleProps} lights={lights} initialId={noteId} />}
           </MacWindow>
         )}
 

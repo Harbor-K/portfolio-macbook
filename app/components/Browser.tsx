@@ -26,7 +26,7 @@ export function Browser({
       {/* Unified toolbar: traffic lights, back/forward, address field, actions */}
       <div {...dragHandleProps} className="flex h-[52px] shrink-0 select-none items-center gap-3 border-b border-black/[0.08] bg-[#f5f5f7] px-[14px]">
         {lights}
-        <div className={`ml-2 flex h-8 items-center rounded-full px-1 ${glass}`} onPointerDown={(e) => e.stopPropagation()}>
+        <div className={`ml-2 flex h-8 items-center rounded-full px-1 ${glass}`} onPointerDown={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
           <button
             type="button"
             aria-label="Previous project"
@@ -51,12 +51,13 @@ export function Browser({
         <div
           className={`mx-auto flex h-8 min-w-0 max-w-[420px] flex-1 items-center justify-center gap-1.5 rounded-full px-3 ${glass}`}
           onPointerDown={(e) => e.stopPropagation()}
+          onDoubleClick={(e) => e.stopPropagation()}
         >
           <LockIcon className="h-[11px] w-[11px] shrink-0 text-black/45" strokeWidth={2.4} />
           <span className="truncate text-[13px] text-black/75">{article.url}</span>
           <RotateCwIcon className="ml-auto h-[12px] w-[12px] shrink-0 text-black/40" strokeWidth={2.2} />
         </div>
-        <div className={`flex h-8 items-center rounded-full px-1 ${glass}`} onPointerDown={(e) => e.stopPropagation()}>
+        <div className={`flex h-8 items-center rounded-full px-1 ${glass}`} onPointerDown={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
           <span className="flex h-7 w-8 items-center justify-center text-black/55">
             <ShareIcon className="h-[15px] w-[15px]" />
           </span>

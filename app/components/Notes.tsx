@@ -25,8 +25,8 @@ const longDate = (iso: string) => {
 };
 
 // An Apple Notes-style window (light mode): the notes listed in the sidebar, and the open note.
-export function Notes({ dragHandleProps, lights }: { dragHandleProps: DragHandleProps; lights: React.ReactNode }) {
-  const [selectedId, setSelectedId] = useState(notes[0]?.id);
+export function Notes({ dragHandleProps, lights, initialId }: { dragHandleProps: DragHandleProps; lights: React.ReactNode; initialId?: string }) {
+  const [selectedId, setSelectedId] = useState(initialId ?? notes[0]?.id);
   const selected = notes.find((n) => n.id === selectedId) ?? notes[0];
 
   return (
