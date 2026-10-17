@@ -245,9 +245,11 @@ export function App() {
   // Reminders opens in the same cascade slot but at a narrower, list-like size.
   const remindersBase = sideWindowFrame(stackFor("reminders"));
   const remindersFrame = { position: remindersBase.position, size: { w: 440, h: Math.min(660, remindersBase.size.h) } };
-  // System Settings opens at a fixed, settings-like size.
+  // System Settings opens compact and low, just above the Dock, so the sky (and the night moon) stays visible.
   const settingsBase = sideWindowFrame(stackFor("settings"));
-  const settingsFrame = { position: settingsBase.position, size: { w: Math.min(760, settingsBase.size.w), h: Math.min(560, settingsBase.size.h) } };
+  const settingsH = 400;
+  const settingsY = Math.max(settingsBase.position.y, (typeof window === "undefined" ? 800 : window.innerHeight) - dockClearance - settingsH);
+  const settingsFrame = { position: { x: settingsBase.position.x, y: settingsY }, size: { w: Math.min(760, settingsBase.size.w), h: settingsH } };
 
   // A project with a mock article opens it in the Safari-style window; others open the Projects window.
   function openProject(project: Project) {
@@ -466,7 +468,7 @@ export function App() {
             initialSize={settingsFrame.size}
             widthClassName=""
             resizable
-            minSize={{ w: 600, h: 400 }}
+            minSize={{ w: 600, h: 360 }}
             {...windowProps("settings")}
           >
             {({ dragHandleProps, lights }) => (

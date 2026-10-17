@@ -108,7 +108,7 @@ export function Settings({
                 <img
                   src={currentWallpaper.src}
                   alt=""
-                  className="h-[150px] w-[240px] shrink-0 rounded-[10px] bg-black/[0.06] object-cover shadow-[0_1px_4px_rgba(0,0,0,0.2)]"
+                  className="h-[120px] w-[192px] shrink-0 rounded-[10px] bg-black/[0.06] object-cover shadow-[0_1px_4px_rgba(0,0,0,0.2)]"
                   style={{ objectPosition: currentWallpaper.objectPosition }}
                   draggable={false}
                 />
@@ -118,12 +118,13 @@ export function Settings({
                 </div>
               </div>
 
-              <h3 className="mt-7 text-[13px] font-semibold text-black/85">Harbor&apos;s Photos</h3>
-              <ul className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
+              <h3 className="mt-5 text-[13px] font-semibold text-black/85">Harbor&apos;s Photos</h3>
+              {/* One row that scrolls sideways (trackpad, shift+wheel or drag the scrollbar). */}
+              <ul className="-mx-6 mt-3 flex snap-x gap-4 overflow-x-auto px-6 pb-2 pt-1">
                 {wallpapers.map((w) => {
                   const isSel = w.id === currentWallpaper.id;
                   return (
-                    <li key={w.id}>
+                    <li key={w.id} className="w-[150px] shrink-0 snap-start">
                       <button type="button" onClick={() => onWallpaperChange(w.id)} className="flex w-full flex-col items-center gap-2 outline-none">
                         <span className={`relative block w-full rounded-[10px] p-[3px] ${isSel ? "ring-[3px] ring-[color:var(--system-blue)]" : ""}`}>
                           <img
