@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { SlidersHorizontalIcon, SparklesIcon } from "lucide-react";
 import { DesktopIcon } from "./components/DesktopIcon";
 import { Dock, type MinimizedWindow } from "./components/Dock";
 import { Finder } from "./components/Finder";
@@ -186,6 +185,8 @@ export function App() {
                 {menu}
               </button>
             ))}
+          </nav>
+          <div className="flex items-center gap-[14px]">
             <button
               type="button"
               aria-haspopup="dialog"
@@ -194,14 +195,11 @@ export function App() {
                 event.stopPropagation();
                 setLlmOpen((value) => !value);
               }}
-              className={`ml-1 flex items-center gap-1 rounded-[5px] px-[9px] py-[2px] font-medium ${llmOpen ? "bg-white/30" : "hover:bg-white/20"}`}
+              className={`-mr-[4px] flex items-center gap-[5px] rounded-[5px] px-[8px] py-[2px] font-medium ${llmOpen ? "bg-white/30" : "hover:bg-white/20"}`}
             >
-              <SparklesIcon className="h-[13px] w-[13px]" strokeWidth={2.2} aria-hidden="true" />
+              <KimLlmGlyph />
               Kim LLM
             </button>
-          </nav>
-          <div className="flex items-center gap-[14px]">
-            <SlidersHorizontalIcon className="h-[14px] w-[14px]" strokeWidth={2.2} aria-label="Control Center" />
             <time dateTime={now.toISOString()} className="whitespace-pre tabular-nums">
               {formatMenuTime(now)}
             </time>
@@ -242,7 +240,7 @@ export function App() {
               onOpen={() => openWindow("projects")}
             />
             <DesktopIcon label="CV.pdf" kind="pdf" selected={selectedIcon === "CV"} onSelect={() => setSelectedIcon("CV")} onOpen={() => openWindow("cv")} />
-            <DesktopIcon label="Archive" kind="image" imageSrc={archiveBookIcon} selected={selectedIcon === "Archive"} onSelect={() => setSelectedIcon("Archive")} />
+            <DesktopIcon label="Book" kind="image" imageSrc={archiveBookIcon} selected={selectedIcon === "Book"} onSelect={() => setSelectedIcon("Book")} />
             <DesktopIcon label="News" kind="news" selected={selectedIcon === "News"} onSelect={() => setSelectedIcon("News")} />
           </div>
         </section>
@@ -308,6 +306,21 @@ export function App() {
         <Dock sections={dockSections} isRunning={(app) => Boolean(app.running)} onOpen={openFromDock} minimized={minimizedInDock} />
       </div>
     </main>
+  );
+}
+
+// Harbor's Kim LLM mark (from kimllm.svg): a four-point sparkle, drawn in the menu bar's text color.
+function KimLlmGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[14px] w-[14px]" fill="none" aria-hidden="true">
+      <path
+        d="M3 12C9.268 12 12 9.363 12 3C12 9.363 14.713 12 21 12C14.713 12 12 14.713 12 21C12 14.713 9.268 12 3 12Z"
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 

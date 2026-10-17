@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ArrowLeftIcon, SearchIcon, SparklesIcon } from "lucide-react";
+import { ArrowLeftIcon, SearchIcon } from "lucide-react";
 import { kimLlm } from "../data/kimLlm";
 
 type Answer = { question: string; text: string };
@@ -115,7 +115,9 @@ export function KimLLM({ open, onClose }: { open: boolean; onClose: () => void }
           {answer ? (
             <div className="px-3 pb-2 pt-1">
               <p className="flex items-center gap-2 text-[12px] font-semibold text-black/45">
-                <SparklesIcon className="h-[14px] w-[14px] text-[color:var(--system-purple)]" strokeWidth={2.2} />
+                <svg viewBox="0 0 24 24" className="h-[13px] w-[13px] text-[color:var(--system-purple)]" fill="none" aria-hidden="true">
+                  <path d="M3 12C9.268 12 12 9.363 12 3C12 9.363 14.713 12 21 12C14.713 12 12 14.713 12 21C12 14.713 9.268 12 3 12Z" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                </svg>
                 Kim LLM
               </p>
               {thinking ? (
