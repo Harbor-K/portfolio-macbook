@@ -20,16 +20,25 @@ import { tagColorFor } from "./data/tags";
 import { defaultWallpaperId, nightFilter, wallpapers } from "./data/wallpaper";
 import { useScreenInit } from "./useScreenInit.js";
 
-type WindowName = "projects" | "about" | "cv" | "article" | "reminders" | "notes" | "settings" | "spinit";
+type BaseWindow = "projects" | "about" | "cv" | "reminders" | "notes" | "settings" | "spinit";
+// Each project's case study gets its own Safari-style window, named "case:<project title>".
+type CaseWindow = `case:${string}`;
+type WindowName = BaseWindow | CaseWindow;
+const caseWindow = (title: string): CaseWindow => `case:${title}`;
+const isCase = (name: WindowName): name is CaseWindow => name.startsWith("case:");
+const caseTitle = (name: CaseWindow) => name.slice(5);
+const caseWindows: CaseWindow[] = Object.keys(caseStudies).map(caseWindow);
 
 type ScreenInit = {
-  openWindows?: Partial<Record<WindowName, boolean>>;
+  openWindows?: Partial<Record<string, boolean>>;
   activeWindow?: WindowName;
   photoBoothInfo?: boolean;
 };
 
-const windowTitles: Record<WindowName, string> = { projects: "Projects", about: "Photo Booth", cv: "CV.pdf", article: "Trust Bank", reminders: "Reminders", notes: "Notes", settings: "System Settings", spinit: "Spin it" };
-const appNames: Record<WindowName, string> = { projects: "Finder", about: "Photo Booth", cv: "Preview", article: "Safari", reminders: "Reminders", notes: "Notes", settings: "System Settings", spinit: "Spin it" };
+const windowTitles: Record<BaseWindow, string> = { projects: "Projects", about: "Photo Booth", cv: "CV.pdf", reminders: "Reminders", notes: "Notes", settings: "System Settings", spinit: "Spin it" };
+const appNames: Record<BaseWindow, string> = { projects: "Finder", about: "Photo Booth", cv: "Preview", reminders: "Reminders", notes: "Notes", settings: "System Settings", spinit: "Spin it" };
+const titleOf = (name: WindowName) => (isCase(name) ? caseTitle(name) : windowTitles[name]);
+const appNameOf = (name: WindowName) => (isCase(name) ? "Safari" : appNames[name]);
 
 // Menu order follows Apple HIG > The menu bar (app menu, File, Edit, View, Window, Help).
 const menus = ["File", "Edit", "View", "Window", "Help"];
@@ -46,7 +55,7 @@ const cascadeStep = { x: 40, y: 30 }; // each extra side window opens this far d
 const maxCascade = 6; // after this many, start again from the first position so windows stay on screen
 
 // `stack` = how many side windows are already open; each one pushes the new window down and to the
-// right so the windows overlap but every title bar stays visible. The size is the same for all.
+// right so the windows overlap but every title bar stays visible.
 function sideWindowFrame(stack: number): { position: { x: number; y: number }; size: WindowSize } {
   const viewportW = Math.max(typeof window === "undefined" ? 1280 : window.innerWidth, 1040);
   const viewportH = typeof window === "undefined" ? 800 : window.innerHeight;
@@ -55,7 +64,10 @@ function sideWindowFrame(stack: number): { position: { x: number; y: number }; s
   const w = Math.max(600, viewportW - baseX - desktopIconsWidth);
   const h = Math.max(320, viewportH - baseY - dockClearance);
   const step = stack % maxCascade;
-  return { position: { x: baseX + step * cascadeStep.x, y: baseY + step * cascadeStep.y }, size: { w, h } };
+  // Cascaded windows shrink by the same offset, so they never slide over the desktop icons or the Dock.
+  const dx = step * cascadeStep.x;
+  const dy = step * cascadeStep.y;
+  return { position: { x: baseX + dx, y: baseY + dy }, size: { w: Math.max(600, w - dx), h: Math.max(320, h - dy) } };
 }
 
 function useLocalClock() {
@@ -75,7 +87,7 @@ function formatMenuTime(date: Date) {
 }
 
 // Small window previews shown in the Dock while a window is minimized.
-const dockThumbs: Record<WindowName, React.ReactNode> = {
+const dockThumbs: Record<BaseWindow, React.ReactNode> = {
   cv: (
     <span className="flex h-[48px] w-[36px] flex-col gap-[3px] rounded-[2px] bg-white p-[5px] shadow-[0_2px_5px_rgba(0,0,0,0.3)]">
       <span className="h-[4px] w-3/4 rounded-[1px] bg-black/60" />
@@ -88,11 +100,6 @@ const dockThumbs: Record<WindowName, React.ReactNode> = {
   ),
   about: <img src={aboutVideo.poster} alt="" className="h-[38px] w-[52px] rounded-[4px] object-cover shadow-[0_2px_5px_rgba(0,0,0,0.3)]" draggable={false} />,
   projects: <img src={projectFolderIcon} alt="" className="h-[48px] w-[48px] object-contain" draggable={false} />,
-  article: (
-    <span className="flex h-[38px] w-[52px] items-center justify-center rounded-[4px] bg-[#459BD7] text-[11px] font-bold text-white shadow-[0_2px_5px_rgba(0,0,0,0.3)]">
-      trust
-    </span>
-  ),
   reminders: (
     <span className="flex h-[48px] w-[38px] flex-col gap-[4px] rounded-[3px] bg-white p-[5px] shadow-[0_2px_5px_rgba(0,0,0,0.3)]">
       <span className="h-[4px] w-3/4 rounded-[1px] bg-[#ff383c]" />
@@ -105,6 +112,12 @@ const dockThumbs: Record<WindowName, React.ReactNode> = {
   settings: <img src={settingsIcon} alt="" className="h-[46px] w-[46px] object-contain" draggable={false} />,
   spinit: <img src={spinItIcon} alt="" className="h-[46px] w-[46px] object-contain" draggable={false} />,
 };
+const thumbOf = (name: WindowName) =>
+  isCase(name) ? (
+    <img src={caseStudies[caseTitle(name)].logo} alt="" className="h-[38px] w-[52px] rounded-[4px] object-cover shadow-[0_2px_5px_rgba(0,0,0,0.3)]" draggable={false} />
+  ) : (
+    dockThumbs[name]
+  );
 
 // The wallpaper choice is remembered in this browser only; if storage is blocked
 // (private window, embedded preview) the defaults are used and nothing breaks.
@@ -139,25 +152,35 @@ function useSystemDark() {
 export function App() {
   const now = useLocalClock();
   const screenInit = useScreenInit() as ScreenInit;
-  const [activeWindow, setActiveWindow] = useState<WindowName>(screenInit.activeWindow ?? "about");
-  const [openWindows, setOpenWindows] = useState<Record<WindowName, boolean>>({
+  const [activeWindow, setActiveWindow] = useState<WindowName>(
+    (screenInit.activeWindow as string) === "article" ? caseWindow("Trust Bank") : (screenInit.activeWindow ?? "about"),
+  );
+  const [openWindows, setOpenWindows] = useState<Record<string, boolean>>({
     about: screenInit.openWindows?.about ?? true,
     projects: screenInit.openWindows?.projects ?? false,
     cv: screenInit.openWindows?.cv ?? false,
-    article: screenInit.openWindows?.article ?? false,
     reminders: screenInit.openWindows?.reminders ?? false,
     notes: screenInit.openWindows?.notes ?? false,
     settings: screenInit.openWindows?.settings ?? false,
     spinit: screenInit.openWindows?.spinit ?? false, // hidden at first; opens from the Dock
+    ...Object.fromEntries(caseWindows.map((name) => [name, screenInit.openWindows?.[name] ?? false])),
+    // Older canvas screens used "article" for the Trust Bank page.
+    ...(screenInit.openWindows?.article ? { [caseWindow("Trust Bank")]: true } : {}),
   });
-  const [minimized, setMinimized] = useState<Record<WindowName, boolean>>({ about: false, projects: false, cv: false, article: false, reminders: false, notes: false, settings: false, spinit: false });
+  const [minimized, setMinimized] = useState<Record<string, boolean>>({});
   const [minimizeOrder, setMinimizeOrder] = useState<WindowName[]>([]);
-  const [windowOrder, setWindowOrder] = useState<Record<WindowName, number>>({ projects: 20, about: 30, cv: 25, article: 26, reminders: 27, notes: 28, settings: 29, spinit: 19 });
+  const [windowOrder, setWindowOrder] = useState<Record<string, number>>({
+    spinit: 19,
+    projects: 20,
+    cv: 25,
+    ...Object.fromEntries(caseWindows.map((name, i) => [name, 26 + i * 0.1])),
+    reminders: 27,
+    notes: 28,
+    settings: 29,
+    about: 30,
+  });
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
   const [llmOpen, setLlmOpen] = useState(false);
-  // Which project's case study the Safari window shows.
-  const [articleKey, setArticleKey] = useState("Trust Bank");
-  const article = caseStudies[articleKey] ?? caseStudies["Trust Bank"];
   // Every visit starts in Light mode; Dark/Auto apply only until the page is reloaded.
   const [theme, setTheme] = useState<ThemeSetting>("light");
   const [wallpaperId, setWallpaperId] = useState(() => {
@@ -224,12 +247,12 @@ export function App() {
 
   const minimizedInDock: MinimizedWindow[] = minimizeOrder
     .filter((name) => openWindows[name])
-    .map((name) => ({ id: name, title: name === "article" ? articleKey : windowTitles[name], thumb: name === "article" ? <img src={article.logo} alt="" className="h-[38px] w-[52px] rounded-[4px] object-cover shadow-[0_2px_5px_rgba(0,0,0,0.3)]" draggable={false} /> : dockThumbs[name], onRestore: () => restoreWindow(name) }));
+    .map((name) => ({ id: name, title: titleOf(name), thumb: thumbOf(name), onRestore: () => restoreWindow(name) }));
 
   const windowProps = (name: WindowName) => ({
     isActive: activeWindow === name,
     zIndex: windowOrder[name],
-    minimized: minimized[name],
+    minimized: Boolean(minimized[name]),
     onFocus: () => focusWindow(name),
     onClose: () => closeWindow(name),
     onMinimize: () => minimizeWindow(name),
@@ -237,11 +260,10 @@ export function App() {
   });
 
   // Read only when a window first opens: it cascades past however many side windows are already showing.
-  const sideWindows: WindowName[] = ["projects", "cv", "article", "reminders", "notes", "settings"];
+  const sideWindows: WindowName[] = ["projects", "cv", ...caseWindows, "reminders", "notes", "settings"];
   const stackFor = (name: WindowName) => sideWindows.filter((other) => other !== name && openWindows[other] && !minimized[other]).length;
   const projectsFrame = sideWindowFrame(stackFor("projects"));
   const cvFrame = sideWindowFrame(stackFor("cv"));
-  const articleFrame = sideWindowFrame(stackFor("article"));
   const notesFrame = sideWindowFrame(stackFor("notes"));
   // Reminders opens in the same cascade slot but at a narrower, list-like size.
   const remindersBase = sideWindowFrame(stackFor("reminders"));
@@ -255,8 +277,7 @@ export function App() {
   // A project with a mock article opens it in the Safari-style window; others open the Projects window.
   function openProject(project: Project) {
     if (project.opensArticle && caseStudies[project.title]) {
-      setArticleKey(project.title);
-      openWindow("article");
+      openWindow(caseWindow(project.title));
     } else {
       openWindow("projects");
     }
@@ -331,7 +352,7 @@ export function App() {
         <header className="absolute inset-x-0 top-0 z-[100] flex h-[24px] select-none items-center justify-between bg-gradient-to-b from-black/25 to-black/5 px-[10px] text-[13px] text-white [text-shadow:0_0_4px_rgba(0,0,0,0.35)]">
           <nav className="flex items-center" aria-label="Menu bar">
             <span className="rounded-[5px] px-[9px] py-[2px] font-semibold">Harbor</span>
-            <span className="rounded-[5px] px-[9px] py-[2px] font-bold">{appNames[activeWindow]}</span>
+            <span className="rounded-[5px] px-[9px] py-[2px] font-bold">{appNameOf(activeWindow)}</span>
             {menus.map((menu) => (
               <button key={menu} type="button" className="rounded-[5px] px-[9px] py-[2px] hover:bg-white/20">
                 {menu}
@@ -425,19 +446,25 @@ export function App() {
           </MacWindow>
         )}
 
-        {openWindows.article && (
-          <MacWindow
-            title={articleKey}
-            initialPosition={articleFrame.position}
-            initialSize={articleFrame.size}
-            widthClassName=""
-            resizable
-            minSize={{ w: 600, h: 360 }}
-            {...windowProps("article")}
-          >
-            {({ dragHandleProps, lights }) => <Browser dragHandleProps={dragHandleProps} lights={lights} article={article} />}
-          </MacWindow>
-        )}
+        {/* One Safari-style window per project case study; each opens, moves and minimizes on its own. */}
+        {caseWindows.map((name) => {
+          if (!openWindows[name]) return null;
+          const frame = sideWindowFrame(stackFor(name));
+          return (
+            <MacWindow
+              key={name}
+              title={caseTitle(name)}
+              initialPosition={frame.position}
+              initialSize={frame.size}
+              widthClassName=""
+              resizable
+              minSize={{ w: 600, h: 360 }}
+              {...windowProps(name)}
+            >
+              {({ dragHandleProps, lights }) => <Browser dragHandleProps={dragHandleProps} lights={lights} article={caseStudies[caseTitle(name)]} />}
+            </MacWindow>
+          );
+        })}
 
         {openWindows.reminders && (
           <MacWindow
