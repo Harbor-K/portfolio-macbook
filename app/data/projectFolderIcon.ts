@@ -6,3 +6,7 @@ export const projectFolderIcon =
 // Archive icon: Harbor's book artwork (from harbor_book.svg), hosted the same way.
 export const archiveBookIcon =
   "https://cdn.jsdelivr.net/gh/Harbor-K/portfolio-macbook@aead309a1ffcc35c8e15413cf8e8430e358d93c5/icons/archive-book.png";
+
+// CV.pdf icon: a Preview-style PDF document icon, hosted the same way.
+export const cvPdfIcon =
+  "https://cdn.jsdelivr.net/gh/Harbor-K/portfolio-macbook@a9005fe02da7ac19c8460d3aa2c6c0c2e55cb29e/icons/cv-pdf.png";

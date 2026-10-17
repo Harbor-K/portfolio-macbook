@@ -11,7 +11,7 @@ import { Reminders } from "./components/Reminders";
 import { aboutIcon, aboutPortrait, aboutVideo } from "./data/aboutVideo";
 import { type DockApp, dockSections } from "./data/dock";
 import { projects, type Project } from "./data/portfolio";
-import { archiveBookIcon, projectFolderIcon } from "./data/projectFolderIcon";
+import { archiveBookIcon, cvPdfIcon, projectFolderIcon } from "./data/projectFolderIcon";
 import { tagColorFor } from "./data/tags";
 import { wallpaper, wallpaperStyle } from "./data/wallpaper";
 import { useScreenInit } from "./useScreenInit.js";
@@ -257,7 +257,7 @@ export function App() {
               onSelect={() => setSelectedIcon("Projects")}
               onOpen={() => openWindow("projects")}
             />
-            <DesktopIcon label="CV.pdf" kind="pdf" selected={selectedIcon === "CV"} onSelect={() => setSelectedIcon("CV")} onOpen={() => openWindow("cv")} />
+            <DesktopIcon label="CV.pdf" kind="image" imageSrc={cvPdfIcon} selected={selectedIcon === "CV"} onSelect={() => setSelectedIcon("CV")} onOpen={() => openWindow("cv")} />
             <DesktopIcon label="Book" kind="image" imageSrc={archiveBookIcon} selected={selectedIcon === "Book"} onSelect={() => setSelectedIcon("Book")} />
             <DesktopIcon label="News" kind="news" selected={selectedIcon === "News"} onSelect={() => setSelectedIcon("News")} />
           </div>
