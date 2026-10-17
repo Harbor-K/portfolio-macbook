@@ -499,8 +499,8 @@ function ProjectIcon({
         />
       </span>
       <span
-        className={`flex max-w-[104px] items-center gap-1 rounded-[4px] px-1.5 py-px text-[12px] font-medium leading-[15px] ${
-          selected ? "bg-[color:var(--system-blue)] text-white" : "text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.75),0_0_6px_rgba(0,0,0,0.35)]"
+        className={`flex max-w-[104px] items-center gap-1 rounded-[4px] px-1.5 py-px text-[12px] font-semibold leading-[15px] ${
+          selected ? "bg-[color:var(--system-blue)] text-white" : "text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_6px_rgba(0,0,0,0.5)]"
         }`}
       >
         <span className="h-[7px] w-[7px] shrink-0 rounded-full ring-1 ring-white/80" style={{ background: tagColor }} aria-hidden="true" />

@@ -27,7 +27,7 @@ export const dockSections: DockApp[][] = [
     { id: "finder", name: "Finder", glyph: "folder", imageUrl: icon("finder"), running: true, action: "projects" },
     { id: "system-settings", name: "System Settings", glyph: "settings", imageUrl: settingsIcon, action: "settings" },
     { id: "reminders", name: "Reminders", glyph: "list", imageUrl: icon("reminders"), badge: 2, action: "reminders" },
-    { id: "music", name: "Music", glyph: "note", imageUrl: icon("music", "4fc944a5ae691ff19eb79f0ee6920253e1bcc987"), running: true },
+    { id: "music", name: "Playlist", glyph: "note", imageUrl: icon("music", "4fc944a5ae691ff19eb79f0ee6920253e1bcc987"), running: true },
   ],
   [
     { id: "figma", name: "Figma", glyph: "pen", imageUrl: icon("figma"), running: true },
