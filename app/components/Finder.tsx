@@ -11,7 +11,7 @@ import {
   SearchIcon,
 } from "lucide-react";
 import type { DragHandleProps } from "./MacWindow";
-import { openProject, projects } from "../data/portfolio";
+import { projects, type Project } from "../data/portfolio";
 import { tagColorFor } from "../data/tags";
 
 const favorites = [
@@ -30,7 +30,15 @@ const tags = [
 const glass =
   "bg-white/70 shadow-[0_1px_3px_rgba(0,0,0,0.08),inset_0_0_0_0.5px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-xl";
 
-export function Finder({ dragHandleProps, lights }: { dragHandleProps: DragHandleProps; lights: React.ReactNode }) {
+export function Finder({
+  dragHandleProps,
+  lights,
+  onOpenProject,
+}: {
+  dragHandleProps: DragHandleProps;
+  lights: React.ReactNode;
+  onOpenProject?: (project: Project) => void;
+}) {
   const [selected, setSelected] = useState<string | null>(null);
   const [view, setView] = useState<"icons" | "list">("icons");
 
@@ -107,7 +115,7 @@ export function Finder({ dragHandleProps, lights }: { dragHandleProps: DragHandl
                         e.stopPropagation();
                         setSelected(project.title);
                       }}
-                      onDoubleClick={() => openProject(project, () => undefined)}
+                      onDoubleClick={() => onOpenProject?.(project)}
                       className="flex w-full flex-col items-center gap-1.5 outline-none"
                     >
                       <span className={`flex h-[76px] w-[100px] items-center justify-center rounded-[8px] ${isSel ? "bg-black/[0.08]" : ""}`}>

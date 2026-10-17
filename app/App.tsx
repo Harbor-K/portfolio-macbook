@@ -6,15 +6,16 @@ import { Finder } from "./components/Finder";
 import { MacWindow, type WindowSize } from "./components/MacWindow";
 import { PhotoBooth } from "./components/PhotoBooth";
 import { Preview } from "./components/Preview";
+import { Browser } from "./components/Browser";
 import { aboutIcon, aboutPortrait, aboutVideo } from "./data/aboutVideo";
 import { type DockApp, dockSections } from "./data/dock";
-import { openProject, projects, type Project } from "./data/portfolio";
+import { projects, type Project } from "./data/portfolio";
 import { archiveBookIcon, projectFolderIcon } from "./data/projectFolderIcon";
 import { tagColorFor } from "./data/tags";
 import { wallpaper, wallpaperStyle } from "./data/wallpaper";
 import { useScreenInit } from "./useScreenInit.js";
 
-type WindowName = "projects" | "about" | "cv";
+type WindowName = "projects" | "about" | "cv" | "article";
 
 type ScreenInit = {
   openWindows?: Partial<Record<WindowName, boolean>>;
@@ -22,8 +23,8 @@ type ScreenInit = {
   photoBoothInfo?: boolean;
 };
 
-const windowTitles: Record<WindowName, string> = { projects: "Projects", about: "Photo Booth", cv: "CV.pdf" };
-const appNames: Record<WindowName, string> = { projects: "Finder", about: "Photo Booth", cv: "Preview" };
+const windowTitles: Record<WindowName, string> = { projects: "Projects", about: "Photo Booth", cv: "CV.pdf", article: "Trust Bank" };
+const appNames: Record<WindowName, string> = { projects: "Finder", about: "Photo Booth", cv: "Preview", article: "Safari" };
 
 // Menu order follows Apple HIG > The menu bar (app menu, File, Edit, View, Window, Help).
 const menus = ["File", "Edit", "View", "Window", "Help"];
@@ -77,6 +78,11 @@ const dockThumbs: Record<WindowName, React.ReactNode> = {
   ),
   about: <img src={aboutVideo.poster} alt="" className="h-[38px] w-[52px] rounded-[4px] object-cover shadow-[0_2px_5px_rgba(0,0,0,0.3)]" draggable={false} />,
   projects: <img src={projectFolderIcon} alt="" className="h-[48px] w-[48px] object-contain" draggable={false} />,
+  article: (
+    <span className="flex h-[38px] w-[52px] items-center justify-center rounded-[4px] bg-[#459BD7] text-[11px] font-bold text-white shadow-[0_2px_5px_rgba(0,0,0,0.3)]">
+      trust
+    </span>
+  ),
 };
 
 export function App() {
@@ -87,10 +93,11 @@ export function App() {
     about: screenInit.openWindows?.about ?? true,
     projects: screenInit.openWindows?.projects ?? false,
     cv: screenInit.openWindows?.cv ?? false,
+    article: screenInit.openWindows?.article ?? false,
   });
-  const [minimized, setMinimized] = useState<Record<WindowName, boolean>>({ about: false, projects: false, cv: false });
+  const [minimized, setMinimized] = useState<Record<WindowName, boolean>>({ about: false, projects: false, cv: false, article: false });
   const [minimizeOrder, setMinimizeOrder] = useState<WindowName[]>([]);
-  const [windowOrder, setWindowOrder] = useState<Record<WindowName, number>>({ projects: 20, about: 30, cv: 25 });
+  const [windowOrder, setWindowOrder] = useState<Record<WindowName, number>>({ projects: 20, about: 30, cv: 25, article: 26 });
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
 
   function focusWindow(windowName: WindowName) {
@@ -143,6 +150,12 @@ export function App() {
   // Read only when a window first opens: the second side window cascades if the other is already open.
   const projectsFrame = sideWindowFrame(openWindows.cv);
   const cvFrame = sideWindowFrame(openWindows.projects);
+  const articleFrame = sideWindowFrame(openWindows.projects || openWindows.cv);
+
+  // A project with a mock article opens it in the Safari-style window; others open the Projects window.
+  function openProject(project: Project) {
+    openWindow(project.opensArticle ? "article" : "projects");
+  }
 
   return (
     <main className="relative min-h-screen w-full overflow-auto text-[13px] leading-4">
@@ -178,7 +191,7 @@ export function App() {
                 tagColor={tagColorFor(index)}
                 selected={selectedIcon === project.title}
                 onSelect={() => setSelectedIcon(project.title)}
-                onOpen={() => openProject(project, () => openWindow("projects"))}
+                onOpen={() => openProject(project)}
               />
             ))}
           </div>
@@ -217,7 +230,7 @@ export function App() {
             minSize={{ w: 600, h: 300 }}
             {...windowProps("projects")}
           >
-            {({ dragHandleProps, lights }) => <Finder dragHandleProps={dragHandleProps} lights={lights} />}
+            {({ dragHandleProps, lights }) => <Finder dragHandleProps={dragHandleProps} lights={lights} onOpenProject={openProject} />}
           </MacWindow>
         )}
 
@@ -232,6 +245,20 @@ export function App() {
             {...windowProps("cv")}
           >
             {({ dragHandleProps, lights, zoomed }) => <Preview dragHandleProps={dragHandleProps} lights={lights} zoomed={zoomed} />}
+          </MacWindow>
+        )}
+
+        {openWindows.article && (
+          <MacWindow
+            title="Trust Bank"
+            initialPosition={articleFrame.position}
+            initialSize={articleFrame.size}
+            widthClassName=""
+            resizable
+            minSize={{ w: 600, h: 360 }}
+            {...windowProps("article")}
+          >
+            {({ dragHandleProps, lights }) => <Browser dragHandleProps={dragHandleProps} lights={lights} />}
           </MacWindow>
         )}
 
