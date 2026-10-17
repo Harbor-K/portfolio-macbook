@@ -95,7 +95,8 @@ export function Finder({ dragHandleProps, lights }: { dragHandleProps: DragHandl
 
         <div className="min-h-0 flex-1 overflow-auto px-4 pb-4" onClick={() => setSelected(null)}>
           {view === "icons" ? (
-            <ul className="grid grid-cols-4 gap-x-2 gap-y-4 pt-2" aria-label="Projects">
+            /* Icons reflow to fill the width as the window is resized, like Finder's icon view. */
+            <ul className="grid grid-cols-[repeat(auto-fill,minmax(112px,1fr))] gap-x-2 gap-y-4 pt-2" aria-label="Projects">
               {projects.map((project, index) => {
                 const isSel = selected === project.title;
                 return (

@@ -8,6 +8,7 @@ Image assets for Harbor's macOS-style portfolio site.
 - `video/about-poster.jpg` — poster frame for that video
 - `about/portrait.jpg` — portrait for the desktop About icon
 - `cv/cv.pdf` — downloadable CV (replace with the real CV under the same name)
+- `icons/projects-folder.png` — desktop Projects folder icon (from harbor_project.svg, 256px wide)
 
 ## Site code (`app/`)
 

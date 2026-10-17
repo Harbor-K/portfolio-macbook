@@ -1,9 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
+import { toPng } from "html-to-image";
 import { CameraIcon, ChevronsRightIcon, LayoutGridIcon, SquareUserIcon, VideoIcon, Volume2Icon, VolumeXIcon } from "lucide-react";
 import { aboutPhoto } from "../data/aboutMedia";
 import { aboutVideo } from "../data/aboutVideo";
 
 type Mode = "info" | "photo" | "video";
+
+// File name used when the shutter saves a screenshot of the whole desktop.
+const screenshotName = "Harbor Portfolio.png";
+// 1x1 transparent PNG, used if an image on the page can't be fetched for the screenshot.
+const blankPixel = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
 function fmt(seconds: number) {
   if (!Number.isFinite(seconds)) return "00:00";
@@ -90,7 +96,10 @@ function PillSlider({
 }
 
 export function PhotoBooth({ initialShowInfo = false }: { initialShowInfo?: boolean }) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hudRef = useRef<HTMLDivElement>(null);
+  const capturing = useRef(false);
   const hasVideo = aboutVideo.url.length > 0;
   const [mode, setMode] = useState<Mode>(initialShowInfo ? "info" : "photo");
   const [playing, setPlaying] = useState(false);
@@ -103,6 +112,13 @@ export function PhotoBooth({ initialShowInfo = false }: { initialShowInfo?: bool
   useEffect(() => {
     if (videoRef.current) videoRef.current.volume = volume;
   }, [volume]);
+
+  // A clicked HUD button keeps keyboard focus, which would keep the HUD visible after the pointer leaves.
+  // Drop that focus when the pointer leaves the video, so the HUD only shows on hover (keyboard users are unaffected).
+  function releaseHudFocus() {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && hudRef.current?.contains(active)) active.blur();
+  }
 
   function togglePlay() {
     const v = videoRef.current;
@@ -127,24 +143,48 @@ export function PhotoBooth({ initialShowInfo = false }: { initialShowInfo?: bool
     setCurrent(value);
   }
 
-  function snap() {
+  // Shutter: flash, then save a PNG of the whole desktop (the element that holds every window).
+  async function snap() {
     setFlash(true);
     window.setTimeout(() => setFlash(false), 160);
+
+    const desktop = rootRef.current?.closest("section[aria-label]")?.parentElement;
+    if (!desktop || capturing.current) return;
+    capturing.current = true;
+    try {
+      const dataUrl = await toPng(desktop, {
+        pixelRatio: window.devicePixelRatio || 1,
+        imagePlaceholder: blankPixel,
+        // Leave the white shutter flash out of the picture.
+        filter: (node) => !(node instanceof HTMLElement && node.dataset.captureIgnore === "true"),
+      });
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = screenshotName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error("Screenshot failed", error);
+    } finally {
+      capturing.current = false;
+    }
   }
 
   const segment = "flex h-[22px] w-[30px] items-center justify-center rounded-[5px] text-black/70 transition-colors";
   const showInfo = mode === "info";
 
   return (
-    <div className="flex h-full select-none flex-col bg-[#e8e6e3]">
-      {/* Video area: 400px tall in a normal window, fills the screen in full screen. */}
-      <div className="group relative min-h-[400px] w-full flex-1 overflow-hidden bg-black">
+    <div ref={rootRef} className="flex h-full select-none flex-col bg-[#e8e6e3]">
+      {/* Video area: fills whatever space the (resizable) window gives it, above the toolbar. */}
+      <div className="group relative min-h-[160px] w-full flex-1 overflow-hidden bg-black" onMouseLeave={releaseHudFocus}>
         <div className={`h-full w-full transition-[filter] duration-300 ${effectOn ? "grayscale contrast-125" : ""}`}>
           {hasVideo ? (
             <video
               ref={videoRef}
               src={aboutVideo.url}
               poster={aboutVideo.poster}
+              crossOrigin="anonymous"
               playsInline
               preload="metadata"
               className="absolute inset-0 h-full w-full object-cover"
@@ -181,7 +221,10 @@ export function PhotoBooth({ initialShowInfo = false }: { initialShowInfo?: bool
 
         {!showInfo && (
           /* Player HUD: blurred gray panel, two rows. Shown only on hover or keyboard focus. */
-          <div className="pointer-events-none absolute bottom-[18px] left-1/2 w-[372px] -translate-x-1/2 rounded-[16px] border border-white/10 bg-[rgba(92,90,88,0.55)] px-[15px] pb-[13px] pt-[12px] text-white opacity-0 shadow-[0_8px_24px_rgba(0,0,0,0.18)] backdrop-blur-[24px] backdrop-saturate-[1.4] transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100">
+          <div
+            ref={hudRef}
+            className="pointer-events-none absolute bottom-[18px] left-1/2 w-[372px] -translate-x-1/2 rounded-[16px] border border-white/10 bg-[rgba(92,90,88,0.55)] px-[15px] pb-[13px] pt-[12px] text-white opacity-0 shadow-[0_8px_24px_rgba(0,0,0,0.18)] backdrop-blur-[24px] backdrop-saturate-[1.4] transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100"
+          >
             <div className="relative flex h-[28px] items-center">
               <button
                 type="button"
@@ -225,7 +268,11 @@ export function PhotoBooth({ initialShowInfo = false }: { initialShowInfo?: bool
           </div>
         )}
 
-        <span className={`pointer-events-none absolute inset-0 bg-white transition-opacity duration-150 ${flash ? "opacity-90" : "opacity-0"}`} aria-hidden="true" />
+        <span
+          data-capture-ignore="true"
+          className={`pointer-events-none absolute inset-0 bg-white transition-opacity duration-150 ${flash ? "opacity-90" : "opacity-0"}`}
+          aria-hidden="true"
+        />
       </div>
 
       {/* Bottom toolbar from the reference: view segments on the left, red shutter in the middle, Effects on the right. */}
@@ -244,8 +291,8 @@ export function PhotoBooth({ initialShowInfo = false }: { initialShowInfo?: bool
 
         <button
           type="button"
-          aria-label="Take photo"
-          onClick={snap}
+          aria-label="Take screenshot"
+          onClick={() => void snap()}
           className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[#e0352b] shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_1px_3px_rgba(0,0,0,0.25)] transition-transform duration-100 active:scale-95"
         >
           <CameraIcon className="h-[21px] w-[21px] text-white" strokeWidth={2.2} />

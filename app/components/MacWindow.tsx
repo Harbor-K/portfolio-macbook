@@ -2,6 +2,8 @@ import React, { type PointerEvent, type ReactNode, useEffect, useLayoutEffect, u
 import { Maximize2Icon, Minimize2Icon, MinusIcon, XIcon } from "lucide-react";
 
 type WindowPosition = { x: number; y: number };
+export type WindowSize = { w: number; h: number };
+type ResizeEdge = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
 
 export type DragHandleProps = {
   onPointerDown: (event: PointerEvent<HTMLElement>) => void;
@@ -15,6 +17,8 @@ type RenderContext = { dragHandleProps: DragHandleProps; lights: ReactNode; zoom
 type MacWindowProps = {
   title: string;
   initialPosition: WindowPosition;
+  /** Size the window opens at. Overrides the size in widthClassName. */
+  initialSize?: WindowSize;
   widthClassName: string;
   isActive: boolean;
   zIndex: number;
@@ -25,6 +29,9 @@ type MacWindowProps = {
   minimized?: boolean;
   appearance?: "light" | "dark";
   titleAlign?: "center" | "leading";
+  /** Let the user drag the window's edges and corners to resize it, like macOS. */
+  resizable?: boolean;
+  minSize?: WindowSize;
   /** Pass a function to draw your own unified toolbar (e.g. Finder) instead of the default title bar. */
   children: ReactNode | ((ctx: RenderContext) => ReactNode);
 };
@@ -80,9 +87,22 @@ export function TrafficLights({
   );
 }
 
+// Invisible hit areas along each edge and corner. Cursors match the macOS resize pointers.
+const resizeHandles: { edge: ResizeEdge; className: string }[] = [
+  { edge: "n", className: "left-[10px] right-[10px] top-0 h-[5px] cursor-ns-resize" },
+  { edge: "s", className: "bottom-0 left-[10px] right-[10px] h-[5px] cursor-ns-resize" },
+  { edge: "e", className: "bottom-[10px] right-0 top-[10px] w-[5px] cursor-ew-resize" },
+  { edge: "w", className: "bottom-[10px] left-0 top-[10px] w-[5px] cursor-ew-resize" },
+  { edge: "nw", className: "left-0 top-0 h-[10px] w-[10px] cursor-nwse-resize" },
+  { edge: "se", className: "bottom-0 right-0 h-[10px] w-[10px] cursor-nwse-resize" },
+  { edge: "ne", className: "right-0 top-0 h-[10px] w-[10px] cursor-nesw-resize" },
+  { edge: "sw", className: "bottom-0 left-0 h-[10px] w-[10px] cursor-nesw-resize" },
+];
+
 export function MacWindow({
   title,
   initialPosition,
+  initialSize,
   widthClassName,
   isActive,
   zIndex,
@@ -92,14 +112,18 @@ export function MacWindow({
   minimized = false,
   appearance = "light",
   titleAlign = "center",
+  resizable = false,
+  minSize = { w: 420, h: 300 },
   children,
 }: MacWindowProps) {
   const [position, setPosition] = useState(initialPosition);
+  const [size, setSize] = useState<WindowSize | null>(initialSize ?? null);
   const [zoomed, setZoomed] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [dockTransform, setDockTransform] = useState<string | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const dragOrigin = useRef<{ pointerX: number; pointerY: number; windowX: number; windowY: number } | null>(null);
+  const resizeOrigin = useRef<{ edge: ResizeEdge; pointerX: number; pointerY: number; x: number; y: number; w: number; h: number } | null>(null);
   const isDark = appearance === "dark";
 
   // Minimize: shrink the window toward the Dock (bottom centre of the desktop), then hide it.
@@ -159,13 +183,58 @@ export function MacWindow({
     onDoubleClick: toggleZoom,
   };
 
+  function startResize(edge: ResizeEdge, event: PointerEvent<HTMLElement>) {
+    event.stopPropagation();
+    onFocus();
+    const el = sectionRef.current;
+    if (zoomed || !el) return;
+    const rect = el.getBoundingClientRect();
+    resizeOrigin.current = { edge, pointerX: event.clientX, pointerY: event.clientY, x: position.x, y: position.y, w: rect.width, h: rect.height };
+    setDragging(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveResize(event: PointerEvent<HTMLElement>) {
+    const o = resizeOrigin.current;
+    if (!o) return;
+    const dx = event.clientX - o.pointerX;
+    const dy = event.clientY - o.pointerY;
+    let { x, y, w, h } = o;
+    if (o.edge.includes("e")) w = Math.max(minSize.w, o.w + dx);
+    if (o.edge.includes("w")) {
+      w = Math.max(minSize.w, o.w - dx);
+      x = o.x + (o.w - w);
+      if (x < 8) {
+        w -= 8 - x;
+        x = 8;
+      }
+    }
+    if (o.edge.includes("s")) h = Math.max(minSize.h, o.h + dy);
+    if (o.edge.includes("n")) {
+      h = Math.max(minSize.h, o.h - dy);
+      y = o.y + (o.h - h);
+      // Keep the title bar below the menu bar.
+      if (y < 28) {
+        h -= 28 - y;
+        y = 28;
+      }
+    }
+    setSize({ w, h });
+    setPosition({ x, y });
+  }
+
+  function endResize() {
+    resizeOrigin.current = null;
+    setDragging(false);
+  }
+
   const lights = (
     <TrafficLights isActive={isActive} dark={isDark} title={title} zoomed={zoomed} onClose={onClose} onMinimize={minimize} onZoom={toggleZoom} />
   );
 
   const frameStyle: React.CSSProperties = zoomed
     ? { left: 0, top: 0, width: "100%", height: "100%", zIndex: 400 }
-    : { left: position.x, top: position.y, zIndex };
+    : { left: position.x, top: position.y, zIndex, ...(size ? { width: size.w, height: size.h } : {}) };
 
   return (
     <section
@@ -207,6 +276,21 @@ export function MacWindow({
           <div className="min-h-0 flex-1">{children}</div>
         </>
       )}
+
+      {resizable &&
+        !zoomed &&
+        !minimized &&
+        resizeHandles.map(({ edge, className }) => (
+          <div
+            key={edge}
+            aria-hidden="true"
+            className={`absolute z-30 touch-none ${className}`}
+            onPointerDown={(event) => startResize(edge, event)}
+            onPointerMove={moveResize}
+            onPointerUp={endResize}
+            onPointerCancel={endResize}
+          />
+        ))}
     </section>
   );
 }

@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { BatteryFullIcon, FolderIcon, SearchIcon, SlidersHorizontalIcon, WifiIcon } from "lucide-react";
+import { BatteryFullIcon, SearchIcon, SlidersHorizontalIcon, WifiIcon } from "lucide-react";
 import { DesktopIcon } from "./components/DesktopIcon";
 import { Dock, type MinimizedWindow } from "./components/Dock";
 import { Finder } from "./components/Finder";
-import { MacWindow } from "./components/MacWindow";
+import { MacWindow, type WindowSize } from "./components/MacWindow";
 import { PhotoBooth } from "./components/PhotoBooth";
 import { Preview } from "./components/Preview";
 import { aboutIcon, aboutPortrait, aboutVideo } from "./data/aboutVideo";
 import { type DockApp, dockSections } from "./data/dock";
 import { projects } from "./data/portfolio";
+import { projectFolderIcon } from "./data/projectFolderIcon";
 import { tagColorFor } from "./data/tags";
 import { wallpaper, wallpaperStyle } from "./data/wallpaper";
 import { useScreenInit } from "./useScreenInit.js";
@@ -26,6 +27,25 @@ const appNames: Record<WindowName, string> = { projects: "Finder", about: "Photo
 
 // Menu order follows Apple HIG > The menu bar (app menu, File, Edit, View, Window, Help).
 const menus = ["File", "Edit", "View", "Window", "Help"];
+
+// Window layout. Photo Booth sits top-left; Projects and CV open in one tidy slot to its right,
+// stretching down to just above the Dock and stopping short of the desktop icons.
+const photoBoothFrame = { x: 20, y: 40, w: 420, h: 368 };
+const windowGap = 16;
+const desktopIconsWidth = 250; // keep the two icon columns on the right uncovered
+const dockClearance = 72; // space left above the bottom edge for the Dock
+const cascadeStep = 24; // offset when both side windows are open, like macOS cascading
+
+function sideWindowFrame(cascade: boolean): { position: { x: number; y: number }; size: WindowSize } {
+  const viewportW = Math.max(typeof window === "undefined" ? 1280 : window.innerWidth, 1040);
+  const viewportH = typeof window === "undefined" ? 800 : window.innerHeight;
+  const offset = cascade ? cascadeStep : 0;
+  const x = photoBoothFrame.x + photoBoothFrame.w + windowGap + offset;
+  const y = photoBoothFrame.y + offset;
+  const w = Math.max(600, Math.min(860, viewportW - x - desktopIconsWidth));
+  const h = Math.max(320, viewportH - y - dockClearance);
+  return { position: { x, y }, size: { w, h } };
+}
 
 function useLocalClock() {
   const [now, setNow] = useState(() => new Date());
@@ -56,11 +76,7 @@ const dockThumbs: Record<WindowName, React.ReactNode> = {
     </span>
   ),
   about: <img src={aboutVideo.poster} alt="" className="h-[38px] w-[52px] rounded-[4px] object-cover shadow-[0_2px_5px_rgba(0,0,0,0.3)]" draggable={false} />,
-  projects: (
-    <span className="flex h-[38px] w-[52px] items-center justify-center rounded-[4px] bg-[#f5f5f7] shadow-[0_2px_5px_rgba(0,0,0,0.3)]">
-      <FolderIcon className="h-5 w-5 fill-[#7cc4f8] text-[#3c93de]" strokeWidth={1.4} />
-    </span>
-  ),
+  projects: <img src={projectFolderIcon} alt="" className="h-[48px] w-[48px] object-contain" draggable={false} />,
 };
 
 export function App() {
@@ -124,6 +140,10 @@ export function App() {
     onMinimize: () => minimizeWindow(name),
   });
 
+  // Read only when a window first opens: the second side window cascades if the other is already open.
+  const projectsFrame = sideWindowFrame(openWindows.cv);
+  const cvFrame = sideWindowFrame(openWindows.projects);
+
   return (
     <main className="relative min-h-screen w-full overflow-auto text-[13px] leading-4">
       <div className="relative min-h-screen min-w-[1040px] overflow-hidden" onClick={() => setSelectedIcon(null)}>
@@ -176,7 +196,15 @@ export function App() {
               onSelect={() => setSelectedIcon("About")}
               onOpen={() => openWindow("about")}
             />
-            <DesktopIcon label="Projects" kind="folder" selected={selectedIcon === "Projects"} onSelect={() => setSelectedIcon("Projects")} onOpen={() => openWindow("projects")} />
+            {/* Opens the same Projects (Finder) window as the Index icon. */}
+            <DesktopIcon
+              label="Projects"
+              kind="image"
+              imageSrc={projectFolderIcon}
+              selected={selectedIcon === "Projects"}
+              onSelect={() => setSelectedIcon("Projects")}
+              onOpen={() => openWindow("projects")}
+            />
             <DesktopIcon label="CV.pdf" kind="pdf" selected={selectedIcon === "CV"} onSelect={() => setSelectedIcon("CV")} onOpen={() => openWindow("cv")} />
             <DesktopIcon label="Soundcloud" kind="disc" selected={selectedIcon === "Soundcloud"} onSelect={() => setSelectedIcon("Soundcloud")} />
             <DesktopIcon label="Archive" kind="archive" selected={selectedIcon === "Archive"} onSelect={() => setSelectedIcon("Archive")} />
@@ -185,19 +213,43 @@ export function App() {
         </section>
 
         {openWindows.projects && (
-          <MacWindow title="Projects" initialPosition={{ x: 300, y: 120 }} widthClassName="h-[460px] w-[760px]" {...windowProps("projects")}>
+          <MacWindow
+            title="Projects"
+            initialPosition={projectsFrame.position}
+            initialSize={projectsFrame.size}
+            widthClassName=""
+            resizable
+            minSize={{ w: 600, h: 300 }}
+            {...windowProps("projects")}
+          >
             {({ dragHandleProps, lights }) => <Finder dragHandleProps={dragHandleProps} lights={lights} />}
           </MacWindow>
         )}
 
         {openWindows.cv && (
-          <MacWindow title="CV.pdf" initialPosition={{ x: 380, y: 48 }} widthClassName="h-[600px] w-[640px]" {...windowProps("cv")}>
+          <MacWindow
+            title="CV.pdf"
+            initialPosition={cvFrame.position}
+            initialSize={cvFrame.size}
+            widthClassName=""
+            resizable
+            minSize={{ w: 420, h: 320 }}
+            {...windowProps("cv")}
+          >
             {({ dragHandleProps, lights, zoomed }) => <Preview dragHandleProps={dragHandleProps} lights={lights} zoomed={zoomed} />}
           </MacWindow>
         )}
 
         {openWindows.about && (
-          <MacWindow title="Photo Booth" initialPosition={{ x: 24, y: 44 }} widthClassName="w-[600px]" {...windowProps("about")}>
+          <MacWindow
+            title="Photo Booth"
+            initialPosition={{ x: photoBoothFrame.x, y: photoBoothFrame.y }}
+            initialSize={{ w: photoBoothFrame.w, h: photoBoothFrame.h }}
+            widthClassName=""
+            resizable
+            minSize={{ w: 420, h: 320 }}
+            {...windowProps("about")}
+          >
             <PhotoBooth initialShowInfo={screenInit.photoBoothInfo ?? false} />
           </MacWindow>
         )}
