@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { SlidersHorizontalIcon } from "lucide-react";
+import { SlidersHorizontalIcon, SparklesIcon } from "lucide-react";
 import { DesktopIcon } from "./components/DesktopIcon";
 import { Dock, type MinimizedWindow } from "./components/Dock";
 import { Finder } from "./components/Finder";
@@ -7,6 +7,7 @@ import { MacWindow, type WindowSize } from "./components/MacWindow";
 import { PhotoBooth } from "./components/PhotoBooth";
 import { Preview } from "./components/Preview";
 import { Browser } from "./components/Browser";
+import { KimLLM } from "./components/KimLLM";
 import { aboutIcon, aboutPortrait, aboutVideo } from "./data/aboutVideo";
 import { type DockApp, dockSections } from "./data/dock";
 import { projects, type Project } from "./data/portfolio";
@@ -99,6 +100,19 @@ export function App() {
   const [minimizeOrder, setMinimizeOrder] = useState<WindowName[]>([]);
   const [windowOrder, setWindowOrder] = useState<Record<WindowName, number>>({ projects: 20, about: 30, cv: 25, article: 26 });
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
+  const [llmOpen, setLlmOpen] = useState(false);
+
+  // ⌘K / Ctrl+K toggles Kim LLM, like Spotlight.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setLlmOpen((value) => !value);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   function focusWindow(windowName: WindowName) {
     setActiveWindow(windowName);
@@ -172,6 +186,19 @@ export function App() {
                 {menu}
               </button>
             ))}
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={llmOpen}
+              onClick={(event) => {
+                event.stopPropagation();
+                setLlmOpen((value) => !value);
+              }}
+              className={`ml-1 flex items-center gap-1 rounded-[5px] px-[9px] py-[2px] font-medium ${llmOpen ? "bg-white/30" : "hover:bg-white/20"}`}
+            >
+              <SparklesIcon className="h-[13px] w-[13px]" strokeWidth={2.2} aria-hidden="true" />
+              Kim LLM
+            </button>
           </nav>
           <div className="flex items-center gap-[14px]">
             <SlidersHorizontalIcon className="h-[14px] w-[14px]" strokeWidth={2.2} aria-label="Control Center" />
@@ -275,6 +302,8 @@ export function App() {
             <PhotoBooth initialShowInfo={screenInit.photoBoothInfo ?? false} />
           </MacWindow>
         )}
+
+        <KimLLM open={llmOpen} onClose={() => setLlmOpen(false)} />
 
         <Dock sections={dockSections} isRunning={(app) => Boolean(app.running)} onOpen={openFromDock} minimized={minimizedInDock} />
       </div>
