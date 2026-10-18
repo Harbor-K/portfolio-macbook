@@ -16,6 +16,8 @@ type RenderContext = { dragHandleProps: DragHandleProps; lights: ReactNode; zoom
 
 type MacWindowProps = {
   title: string;
+  /** Stable id for this window (used to copy it into its Dock thumbnail when minimized). */
+  windowId?: string;
   initialPosition: WindowPosition;
   /** Size the window opens at. Overrides the size in widthClassName. */
   initialSize?: WindowSize;
@@ -94,6 +96,7 @@ const resizeHandles: { edge: ResizeEdge; className: string }[] = [
 
 export function MacWindow({
   title,
+  windowId,
   initialPosition,
   initialSize,
   widthClassName,
@@ -280,6 +283,7 @@ export function MacWindow({
       aria-label={title}
       aria-hidden={minimized}
       data-themed=""
+      data-window-id={windowId}
       onPointerDown={onFocus}
     >
       {typeof children === "function" ? (

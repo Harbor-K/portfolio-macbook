@@ -14,8 +14,10 @@ import { notes } from "./data/notes";
 import { Settings, type ThemeSetting } from "./components/Settings";
 import type { A11ySettings } from "./components/AccessibilityPane";
 import { SpinIt } from "./components/SpinIt";
+import { WindowPreview } from "./components/WindowPreview";
+import { CompassIcon } from "lucide-react";
 import { MobileSafari } from "./components/MobileSafari";
-import { aboutIcon, aboutPortrait, aboutVideo } from "./data/aboutVideo";
+import { aboutIcon, aboutPortrait } from "./data/aboutVideo";
 import { type DockApp, dockSections, settingsIcon, spinItIcon } from "./data/dock";
 import { projects, type Project } from "./data/portfolio";
 import { archiveBookIcon, cvPdfIcon, notesIcon, projectFolderIcon } from "./data/projectFolderIcon";
@@ -89,38 +91,30 @@ function formatMenuTime(date: Date) {
   return `${day}  ${time}`;
 }
 
-// Small window previews shown in the Dock while a window is minimized.
-const dockThumbs: Record<BaseWindow, React.ReactNode> = {
-  cv: (
-    <span className="flex h-[48px] w-[36px] flex-col gap-[3px] rounded-[2px] bg-white p-[5px] shadow-[0_2px_5px_rgba(0,0,0,0.3)]">
-      <span className="h-[4px] w-3/4 rounded-[1px] bg-black/60" />
-      <span className="h-[2px] w-1/2 rounded-[1px] bg-black/25" />
-      <span className="mt-[3px] h-[2px] w-full rounded-[1px] bg-black/15" />
-      <span className="h-[2px] w-full rounded-[1px] bg-black/15" />
-      <span className="h-[2px] w-4/5 rounded-[1px] bg-black/15" />
-      <span className="h-[2px] w-full rounded-[1px] bg-black/15" />
-    </span>
-  ),
-  about: <img src={aboutVideo.poster} alt="" className="h-[38px] w-[52px] rounded-[4px] object-cover shadow-[0_2px_5px_rgba(0,0,0,0.3)]" draggable={false} />,
-  projects: <img src={projectFolderIcon} alt="" className="h-[48px] w-[48px] object-contain" draggable={false} />,
-  reminders: (
-    <span className="flex h-[48px] w-[38px] flex-col gap-[4px] rounded-[3px] bg-white p-[5px] shadow-[0_2px_5px_rgba(0,0,0,0.3)]">
-      <span className="h-[4px] w-3/4 rounded-[1px] bg-[#ff383c]" />
-      <span className="mt-[2px] h-[2px] w-full rounded-[1px] bg-black/20" />
-      <span className="h-[2px] w-full rounded-[1px] bg-black/20" />
-      <span className="h-[2px] w-4/5 rounded-[1px] bg-black/20" />
-    </span>
-  ),
-  notes: <img src={notesIcon} alt="" className="h-[46px] w-[46px] object-contain" draggable={false} />,
-  settings: <img src={settingsIcon} alt="" className="h-[46px] w-[46px] object-contain" draggable={false} />,
-  spinit: <img src={spinItIcon} alt="" className="h-[46px] w-[46px] object-contain" draggable={false} />,
+// Dock thumbnail of a minimized window: a shrunken copy of the window with its app's icon in the corner.
+const finderIcon = dockSections.flat().find((app) => app.id === "finder")?.imageUrl ?? "";
+const remindersIcon = dockSections.flat().find((app) => app.id === "reminders")?.imageUrl ?? "";
+const appIconSrc: Record<BaseWindow, string> = {
+  projects: finderIcon,
+  about: aboutIcon,
+  cv: cvPdfIcon,
+  reminders: remindersIcon,
+  notes: notesIcon,
+  settings: settingsIcon,
+  spinit: spinItIcon,
 };
-const thumbOf = (name: WindowName, page?: string) =>
-  isCase(name) ? (
-    <img src={caseStudies[page ?? caseTitle(name)].logo} alt="" className="h-[38px] w-[52px] rounded-[4px] object-cover shadow-[0_2px_5px_rgba(0,0,0,0.3)]" draggable={false} />
-  ) : (
-    dockThumbs[name]
-  );
+// No Safari icon is hosted, so case-study windows get a simple compass tile.
+const browserIcon = (
+  <span className="flex h-full w-full items-center justify-center rounded-[22.5%] bg-gradient-to-b from-[#5ac8fa] to-[#0a6cff] text-white shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.15)]">
+    <CompassIcon className="h-[72%] w-[72%]" strokeWidth={1.8} />
+  </span>
+);
+const thumbOf = (name: WindowName) => (
+  <WindowPreview
+    windowId={name}
+    appIcon={isCase(name) ? browserIcon : <img src={appIconSrc[name]} alt="" className="h-full w-full object-contain" draggable={false} />}
+  />
+);
 
 // The wallpaper choice is remembered in this browser only; if storage is blocked
 // (private window, embedded preview) the defaults are used and nothing breaks.
@@ -291,9 +285,10 @@ export function App() {
 
   const minimizedInDock: MinimizedWindow[] = minimizeOrder
     .filter((name) => openWindows[name])
-    .map((name) => ({ id: name, title: isCase(name) ? pageOf(name) : windowTitles[name], thumb: thumbOf(name, isCase(name) ? pageOf(name) : undefined), onRestore: () => restoreWindow(name) }));
+    .map((name) => ({ id: name, title: isCase(name) ? pageOf(name) : windowTitles[name], thumb: thumbOf(name), onRestore: () => restoreWindow(name) }));
 
   const windowProps = (name: WindowName) => ({
+    windowId: name,
     isActive: activeWindow === name,
     zIndex: windowOrder[name],
     minimized: Boolean(minimized[name]),

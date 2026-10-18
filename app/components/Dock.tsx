@@ -29,7 +29,7 @@ const glyphs: Record<DockGlyph, LucideIcon> = {
   trash: Trash2Icon,
 };
 
-/** A window sent to the Dock with the yellow button. Shown left of the Trash, as on macOS. */
+/** A window sent to the Dock with the yellow button. Shown after its own divider at the right end, as on macOS. */
 export type MinimizedWindow = { id: string; title: string; thumb: ReactNode; onRestore: () => void };
 
 type DockProps = {
@@ -96,7 +96,7 @@ function MinimizedItem({ win, showLabel, onHover, onLeave }: { win: MinimizedWin
         type="button"
         aria-label={`Restore ${win.title}`}
         onClick={win.onRestore}
-        className="flex h-[52px] w-[52px] items-center justify-center rounded-[8px] outline-none transition-transform duration-150 active:scale-95 focus-visible:ring-2 focus-visible:ring-[color:var(--system-blue)]"
+        className="flex h-[52px] min-w-[52px] items-center justify-center rounded-[8px] outline-none transition-transform duration-150 active:scale-95 focus-visible:ring-2 focus-visible:ring-[color:var(--system-blue)]"
       >
         {win.thumb}
       </button>
