@@ -7,6 +7,7 @@ Image assets for Harbor's macOS-style portfolio site.
 - `wallpaper/pink-sky.jpg`, `wallpaper/seaside.jpg`, `wallpaper/park-sunset.jpg` — more wallpapers (System Settings > Wallpaper)
 - `video/intro.mp4` — Photo Booth intro video for the About window (H.264/AAC MP4)
 - `video/intro-poster.jpg` — poster frame for that video
+- `audio/spin-it-track-01.m4a` — Harbor's own recording, the first track in the Spin it player (AAC)
 - `about/portrait.jpg` — portrait for the desktop About icon
 - `cv/cv.pdf` — downloadable CV (replace with the real CV under the same name)
 - `icons/projects-folder.png` — desktop Projects folder icon (from harbor_project.svg, 256px wide)
