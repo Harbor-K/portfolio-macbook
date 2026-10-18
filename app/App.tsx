@@ -52,7 +52,7 @@ const menus = ["File", "Edit", "View", "Window", "Help"];
 // stretching down to just above the Dock and stopping short of the desktop icons.
 const photoBoothFrame = { x: 20, y: 40, w: 420, h: 368 };
 // The Spin it turntable sits just under Photo Booth, the same width.
-const spinItFrame = { x: photoBoothFrame.x, y: photoBoothFrame.y + photoBoothFrame.h + 16, w: photoBoothFrame.w, h: 196 };
+const spinItFrame = { x: photoBoothFrame.x, y: photoBoothFrame.y + photoBoothFrame.h + 16, w: photoBoothFrame.w, h: 212 };
 const windowGap = 16;
 const desktopIconsWidth = 244; // stop just short of the two desktop icon columns on the right
 const dockClearance = 92; // end just above the Dock, with a small gap

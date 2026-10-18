@@ -203,7 +203,7 @@ export function MobileSafari({
           {page.kind === "spinit" && (
             <div className="px-4 pb-[120px] pt-2">
               <h1 className={sectionTitle}>Spin it</h1>
-              <div className="mt-4 h-[210px] overflow-hidden rounded-[22px] shadow-[0_6px_20px_rgba(0,0,0,0.2)]">
+              <div className="mt-4 h-[212px] overflow-hidden rounded-[22px] shadow-[0_6px_20px_rgba(0,0,0,0.2)]">
                 <SpinIt dragHandleProps={noDrag} lights={null} />
               </div>
             </div>
