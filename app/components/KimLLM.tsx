@@ -111,7 +111,7 @@ export function KimLLM({ open, onClose }: { open: boolean; onClose: () => void }
           <kbd className="shrink-0 rounded-[7px] bg-black/[0.07] px-2.5 py-1 font-sans text-[12px] text-black/45">esc</kbd>
         </form>
 
-        <div className="min-h-[180px] px-3 pb-3">
+        <div data-readable="" className="min-h-[180px] px-3 pb-3">
           {answer ? (
             <div className="px-3 pb-2 pt-1">
               <p className="flex items-center gap-2 text-[12px] font-semibold text-black/45">

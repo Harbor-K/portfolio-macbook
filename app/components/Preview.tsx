@@ -81,7 +81,7 @@ export function Preview({ dragHandleProps, lights, zoomed }: { dragHandleProps: 
         {cv.pdfUrl ? (
           <iframe src={`${cv.pdfUrl}#toolbar=0&view=FitH`} title={cv.fileName} className="mx-auto block h-full w-full max-w-[900px] rounded-[2px] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.2)]" />
         ) : (
-          <div className="mx-auto w-fit" style={{ zoom: effective } as React.CSSProperties}>
+          <div data-readable="" className="mx-auto w-fit" style={{ zoom: effective } as React.CSSProperties}>
             <CvPage />
           </div>
         )}

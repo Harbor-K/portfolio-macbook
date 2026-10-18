@@ -147,7 +147,7 @@ export function MacWindow({
     const funnel = (top: number, bottom: number) =>
       `polygon(${pct(-10 + (f + 10) * top)} -10%, ${pct(110 - (110 - f) * top)} -10%, ${pct(f + bottom)} 110%, ${pct(f - bottom)} 110%)`;
 
-    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || Boolean(el.closest(".a11y-reduce-motion"));
     const frames: Keyframe[] = reduceMotion
       ? [
           { opacity: 1, transform: "none" },

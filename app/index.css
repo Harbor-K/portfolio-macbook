@@ -147,3 +147,75 @@ button {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* ---------- Accessibility (System Settings > Accessibility) ---------- */
+
+/* Keyboard focus is always visible (WCAG 2.4.7 Focus Visible). */
+:focus-visible {
+  outline: 2px solid var(--system-blue);
+  outline-offset: 2px;
+}
+
+/* Reduce motion (WCAG 2.3.3): animations and transitions finish instantly. */
+.a11y-reduce-motion *,
+.a11y-reduce-motion *::before,
+.a11y-reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Larger text (WCAG 1.4.4): reading areas are enlarged by 20%. */
+.a11y-large-text [data-readable] {
+  zoom: 1.2;
+}
+
+/* Increase contrast (WCAG 1.4.3 / 1.4.6): darker secondary text, stronger borders, solid toolbar controls. */
+.a11y-contrast [data-themed] .text-black\/15 { color: rgba(0,0,0,0.74); }
+.a11y-contrast [data-themed] .text-black\/25 { color: rgba(0,0,0,0.74); }
+.a11y-contrast [data-themed] .text-black\/30 { color: rgba(0,0,0,0.74); }
+.a11y-contrast [data-themed] .text-black\/35 { color: rgba(0,0,0,0.74); }
+.a11y-contrast [data-themed] .text-black\/40 { color: rgba(0,0,0,0.74); }
+.a11y-contrast [data-themed] .text-black\/45 { color: rgba(0,0,0,0.74); }
+.a11y-contrast [data-themed] .text-black\/50 { color: rgba(0,0,0,0.74); }
+.a11y-contrast [data-themed] .text-black\/55 { color: rgba(0,0,0,0.74); }
+.a11y-contrast [data-themed] .text-black\/60 { color: rgba(0,0,0,0.74); }
+.a11y-contrast [data-themed] .text-black\/70 { color: rgba(0,0,0,0.92); }
+.a11y-contrast [data-themed] .text-black\/75 { color: rgba(0,0,0,0.92); }
+.a11y-contrast [data-themed] .text-black\/80 { color: rgba(0,0,0,0.92); }
+.a11y-contrast [data-themed] .text-black\/85 { color: rgba(0,0,0,0.92); }
+.a11y-contrast [data-themed] .text-black\/90 { color: rgba(0,0,0,0.92); }
+.a11y-contrast [data-themed] .border-black\/\[0\.08\] { border-color: rgba(0,0,0,0.32); }
+.a11y-contrast [data-themed] .border-black\/\[0\.1\] { border-color: rgba(0,0,0,0.32); }
+.a11y-contrast [data-themed] .border-black\/10 { border-color: rgba(0,0,0,0.32); }
+.a11y-contrast [data-themed] .divide-black\/\[0\.08\] > * + * { border-color: rgba(0,0,0,0.32); }
+.a11y-contrast [data-themed] .bg-white\/70 { background-color: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.45); }
+.a11y-contrast [data-themed] .bg-\[\#f0f0f2\]\/90 { background-color: #e9e9ec; }
+.theme-dark.a11y-contrast [data-themed] .text-black\/15:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.78); }
+.theme-dark.a11y-contrast [data-themed] .text-black\/25:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.78); }
+.theme-dark.a11y-contrast [data-themed] .text-black\/30:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.78); }
+.theme-dark.a11y-contrast [data-themed] .text-black\/35:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.78); }
+.theme-dark.a11y-contrast [data-themed] .text-black\/40:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.78); }
+.theme-dark.a11y-contrast [data-themed] .text-black\/45:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.78); }
+.theme-dark.a11y-contrast [data-themed] .text-black\/50:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.78); }
+.theme-dark.a11y-contrast [data-themed] .text-black\/55:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.78); }
+.theme-dark.a11y-contrast [data-themed] .text-black\/60:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.78); }
+.theme-dark.a11y-contrast [data-themed] .text-black\/70:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.96); }
+.theme-dark.a11y-contrast [data-themed] .text-black\/75:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.96); }
+.theme-dark.a11y-contrast [data-themed] .text-black\/80:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.96); }
+.theme-dark.a11y-contrast [data-themed] .text-black\/85:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.96); }
+.theme-dark.a11y-contrast [data-themed] .text-black\/90:not([data-keep-light], [data-keep-light] *) { color: rgba(255,255,255,0.96); }
+.theme-dark.a11y-contrast [data-themed] .border-black\/\[0\.08\]:not([data-keep-light], [data-keep-light] *) { border-color: rgba(255,255,255,0.36); }
+.theme-dark.a11y-contrast [data-themed] .border-black\/\[0\.1\]:not([data-keep-light], [data-keep-light] *) { border-color: rgba(255,255,255,0.36); }
+.theme-dark.a11y-contrast [data-themed] .border-black\/10:not([data-keep-light], [data-keep-light] *) { border-color: rgba(255,255,255,0.36); }
+.theme-dark.a11y-contrast [data-themed] .bg-white\/70:not([data-keep-light], [data-keep-light] *) { background-color: #3a3a3e; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5); }
+.a11y-contrast nav[aria-label="Dock"] > div {
+  background-color: rgba(255, 255, 255, 0.72);
+  border-color: rgba(0, 0, 0, 0.35);
+}
+.theme-dark.a11y-contrast nav[aria-label="Dock"] > div {
+  background-color: rgba(20, 20, 22, 0.85);
+  border-color: rgba(255, 255, 255, 0.4);
+}

@@ -60,7 +60,7 @@ export function Notes({ dragHandleProps, lights, initialId }: { dragHandleProps:
         <div {...dragHandleProps} className="h-[40px] shrink-0 select-none" />
 
         {selected && (
-          <article className="min-h-0 flex-1 select-text overflow-auto px-7 pb-12 pt-0">
+          <article data-readable="" className="min-h-0 flex-1 select-text overflow-auto px-7 pb-12 pt-0">
             <p className="text-center text-[12px] text-black/40">{longDate(selected.date)}</p>
             <div className="mx-auto mt-5 max-w-[620px]">
               <p className="flex justify-between border-b border-black/[0.08] pb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-black/40">

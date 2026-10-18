@@ -12,6 +12,7 @@ import { Reminders } from "./components/Reminders";
 import { Notes } from "./components/Notes";
 import { notes } from "./data/notes";
 import { Settings, type ThemeSetting } from "./components/Settings";
+import type { A11ySettings } from "./components/AccessibilityPane";
 import { SpinIt } from "./components/SpinIt";
 import { aboutIcon, aboutPortrait, aboutVideo } from "./data/aboutVideo";
 import { type DockApp, dockSections, settingsIcon, spinItIcon } from "./data/dock";
@@ -193,6 +194,24 @@ export function App() {
     const saved = readSetting("harbor.wallpaper");
     return wallpapers.some((w) => w.id === saved) ? (saved as string) : defaultWallpaperId;
   });
+  // Accessibility toggles (System Settings > Accessibility). Remembered in this browser; Reduce motion
+  // starts on when the visitor's device already asks for reduced motion.
+  const [a11y, setA11y] = useState<A11ySettings>(() => {
+    const fallback: A11ySettings = {
+      reduceMotion: typeof window !== "undefined" && Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches),
+      increaseContrast: false,
+      largerText: false,
+    };
+    try {
+      return { ...fallback, ...JSON.parse(readSetting("harbor.a11y") ?? "{}") };
+    } catch {
+      return fallback;
+    }
+  });
+  function changeA11y(next: A11ySettings) {
+    setA11y(next);
+    writeSetting("harbor.a11y", JSON.stringify(next));
+  }
   const systemDark = useSystemDark();
   const isDark = theme === "dark" || (theme === "auto" && systemDark);
   const wallpaper = wallpapers.find((w) => w.id === wallpaperId) ?? wallpapers[0];
@@ -328,7 +347,11 @@ export function App() {
   };
 
   return (
-    <main className={`relative h-screen w-full overflow-hidden text-[13px] leading-4 ${isDark ? "theme-dark" : ""}`}>
+    <main
+      className={`relative h-screen w-full overflow-hidden text-[13px] leading-4 ${isDark ? "theme-dark" : ""} ${a11y.reduceMotion ? "a11y-reduce-motion" : ""} ${
+        a11y.increaseContrast ? "a11y-contrast" : ""
+      } ${a11y.largerText ? "a11y-large-text" : ""}`}
+    >
       <div className="relative h-full min-w-[1040px] overflow-hidden" onClick={() => setSelectedIcon(null)}>
         {/* Wallpaper. In dark mode it fades from day to night over ~1.6 s: the photo dims and cools,
             a navy sky wash and a few stars fade in. A wallpaper with its own nightSrc crossfades to that photo instead. */}
@@ -567,6 +590,8 @@ export function App() {
                 onThemeChange={changeTheme}
                 wallpaperId={wallpaper.id}
                 onWallpaperChange={changeWallpaper}
+                a11y={a11y}
+                onA11yChange={changeA11y}
               />
             )}
           </MacWindow>

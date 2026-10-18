@@ -68,7 +68,7 @@ export function Browser({
       </div>
 
       {/* Page */}
-      <div key={article.url} data-keep-light="" className="min-h-0 flex-1 select-text overflow-auto bg-white text-[#1d1d1f]">
+      <div key={article.url} data-keep-light="" data-readable="" className="min-h-0 flex-1 select-text overflow-auto bg-white text-[#1d1d1f]">
         <header className="px-10 pb-12 pt-10 text-white" style={{ background: article.brandColor }}>
           <img src={article.logo} alt="" className={article.logoClassName ?? "h-[44px] w-auto rounded-[4px]"} draggable={false} />
           <p className="mt-10 text-[12px] font-semibold uppercase tracking-[0.1em] text-white/80">{article.eyebrow}</p>

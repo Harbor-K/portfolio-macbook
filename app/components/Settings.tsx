@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, ContrastIcon, FlowerIcon } from "lucide-react";
+import { AccessibilityIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, ContrastIcon, FlowerIcon } from "lucide-react";
+import { AccessibilityPane, type A11ySettings } from "./AccessibilityPane";
 import type { DragHandleProps } from "./MacWindow";
 import { wallpapers } from "../data/wallpaper";
 
@@ -8,11 +9,12 @@ export type ThemeSetting = "auto" | "light" | "dark";
 const glass =
   "bg-white/70 shadow-[0_1px_3px_rgba(0,0,0,0.08),inset_0_0_0_0.5px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-xl";
 
-type Pane = "appearance" | "wallpaper";
+type Pane = "appearance" | "wallpaper" | "accessibility";
 
 const panes: { id: Pane; name: string; icon: typeof ContrastIcon; tile: string }[] = [
   { id: "appearance", name: "Appearance", icon: ContrastIcon, tile: "bg-[#1d1d1f]" },
   { id: "wallpaper", name: "Wallpaper", icon: FlowerIcon, tile: "bg-gradient-to-b from-[#5ac8fa] to-[#0a84ff]" },
+  { id: "accessibility", name: "Accessibility", icon: AccessibilityIcon, tile: "bg-gradient-to-b from-[#5ac8fa] to-[#0a84ff]" },
 ];
 
 const themeOptions: { id: ThemeSetting; name: string }[] = [
@@ -21,7 +23,7 @@ const themeOptions: { id: ThemeSetting; name: string }[] = [
   { id: "dark", name: "Dark" },
 ];
 
-// A System Settings-style window with two working panes: Appearance (Auto / Light / Dark) and Wallpaper.
+// A System Settings-style window with three working panes: Appearance (Auto / Light / Dark), Wallpaper and Accessibility.
 export function Settings({
   dragHandleProps,
   lights,
@@ -29,6 +31,8 @@ export function Settings({
   onThemeChange,
   wallpaperId,
   onWallpaperChange,
+  a11y,
+  onA11yChange,
   initialPane = "wallpaper",
 }: {
   dragHandleProps: DragHandleProps;
@@ -37,6 +41,8 @@ export function Settings({
   onThemeChange: (theme: ThemeSetting) => void;
   wallpaperId: string;
   onWallpaperChange: (id: string) => void;
+  a11y: A11ySettings;
+  onA11yChange: (next: A11ySettings) => void;
   initialPane?: Pane;
 }) {
   const [pane, setPane] = useState<Pane>(initialPane);
@@ -84,7 +90,9 @@ export function Settings({
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto px-6 pb-8 pt-2">
-          {pane === "appearance" ? (
+          {pane === "accessibility" ? (
+            <AccessibilityPane value={a11y} onChange={onA11yChange} />
+          ) : pane === "appearance" ? (
             <div className="rounded-[12px] bg-black/[0.04] p-5">
               <p className="font-medium text-black/85">Appearance</p>
               <div className="mt-4 flex gap-6">
