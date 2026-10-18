@@ -45,8 +45,6 @@ const windowTitles: Record<BaseWindow, string> = { projects: "Projects", about: 
 const appNames: Record<BaseWindow, string> = { projects: "Finder", about: "Photo Booth", cv: "Preview", reminders: "Reminders", notes: "Notes", settings: "System Settings", spinit: "Spin it" };
 const appNameOf = (name: WindowName) => (isCase(name) ? "Safari" : appNames[name]);
 
-// Menu order follows Apple HIG > The menu bar (app menu, File, Edit, View, Window, Help).
-const menus = ["File", "Edit", "View", "Window", "Help"];
 
 // Window layout. Photo Booth sits top-left; Projects and CV open in one tidy slot to its right,
 // stretching down to just above the Dock and stopping short of the desktop icons.
@@ -58,12 +56,16 @@ const desktopIconsWidth = 244; // stop just short of the two desktop icon column
 const dockClearance = 92; // end just above the Dock, with a small gap
 const cascadeStep = { x: 40, y: 30 }; // each extra side window opens this far down-right of the last, like macOS cascading
 const maxCascade = 6; // after this many, start again from the first position so windows stay on screen
+// The desktop never gets smaller than this. When the visitor zooms the browser in and the window is
+// smaller, the page scrolls instead of cutting the desktop off.
+const minDesktop = { w: 1040, h: 680 };
+const viewportHeight = () => Math.max(typeof window === "undefined" ? 800 : window.innerHeight, minDesktop.h);
 
 // `stack` = how many side windows are already open; each one pushes the new window down and to the
 // right so the windows overlap but every title bar stays visible.
 function sideWindowFrame(stack: number): { position: { x: number; y: number }; size: WindowSize } {
-  const viewportW = Math.max(typeof window === "undefined" ? 1280 : window.innerWidth, 1040);
-  const viewportH = typeof window === "undefined" ? 800 : window.innerHeight;
+  const viewportW = Math.max(typeof window === "undefined" ? 1280 : window.innerWidth, minDesktop.w);
+  const viewportH = viewportHeight();
   const baseX = photoBoothFrame.x + photoBoothFrame.w + windowGap;
   const baseY = photoBoothFrame.y;
   const w = Math.max(600, viewportW - baseX - desktopIconsWidth);
@@ -310,7 +312,7 @@ export function App() {
   // System Settings opens compact and low, just above the Dock, so the sky (and the night moon) stays visible.
   const settingsBase = sideWindowFrame(stackFor("settings"));
   const settingsH = 400;
-  const settingsY = Math.max(settingsBase.position.y, (typeof window === "undefined" ? 800 : window.innerHeight) - dockClearance - settingsH);
+  const settingsY = Math.max(settingsBase.position.y, viewportHeight() - dockClearance - settingsH);
   const settingsFrame = { position: { x: settingsBase.position.x, y: settingsY }, size: { w: Math.min(760, settingsBase.size.w), h: settingsH } };
 
   // A project with a mock article opens it in the Safari-style window; others open the Projects window.
@@ -362,7 +364,7 @@ export function App() {
 
   return (
     <main
-      className={`relative ${isMobile ? "h-[100dvh]" : "h-screen"} w-full overflow-hidden text-[13px] leading-4 ${isDark ? "theme-dark" : ""} ${a11y.reduceMotion ? "a11y-reduce-motion" : ""} ${
+      className={`relative ${isMobile ? "h-[100dvh] overflow-hidden" : "h-screen overflow-auto"} w-full text-[13px] leading-4 ${isDark ? "theme-dark" : ""} ${a11y.reduceMotion ? "a11y-reduce-motion" : ""} ${
         a11y.increaseContrast ? "a11y-contrast" : ""
       } ${a11y.largerText ? "a11y-large-text" : ""}`}
     >
@@ -372,7 +374,7 @@ export function App() {
           <KimLLM open={llmOpen} onClose={() => setLlmOpen(false)} />
         </>
       ) : (
-      <div className="relative h-full min-w-[1040px] overflow-hidden" onClick={() => setSelectedIcon(null)}>
+      <div className="relative h-full min-h-[680px] min-w-[1040px] overflow-hidden" onClick={() => setSelectedIcon(null)}>
         {/* Wallpaper. In dark mode it fades from day to night over ~1.6 s: the photo dims and cools,
             a navy sky wash and a few stars fade in. A wallpaper with its own nightSrc crossfades to that photo instead. */}
         <div key={wallpaper.id} className="absolute inset-0 animate-[wallpaperIn_400ms_ease-out]">
@@ -440,11 +442,6 @@ export function App() {
           <nav className="flex items-center" aria-label="Menu bar">
             <span className="rounded-[5px] px-[9px] py-[2px] font-semibold">Harbor</span>
             <span className="rounded-[5px] px-[9px] py-[2px] font-bold">{appNameOf(activeWindow)}</span>
-            {menus.map((menu) => (
-              <button key={menu} type="button" className="rounded-[5px] px-[9px] py-[2px] hover:bg-white/20">
-                {menu}
-              </button>
-            ))}
           </nav>
           <div className="flex items-center gap-[14px]">
             <button

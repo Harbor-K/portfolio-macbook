@@ -211,10 +211,10 @@ export function PhotoBooth({ initialShowInfo = false }: { initialShowInfo?: bool
             <p className="mt-3">I came to interfaces from a fine art background, and I&apos;ve lived and worked in Australia and the UK.</p>
             <p className="mt-5 text-white/55">
               links&nbsp;&nbsp;
-              <a href="#" className="text-[#5cb8ff] hover:underline">Email</a>,{" "}
-              <a href="#" className="text-[#5cb8ff] hover:underline">LinkedIn</a>,{" "}
-              <a href="#" className="text-[#5cb8ff] hover:underline">Instagram</a>,{" "}
-              <a href="#" className="text-[#5cb8ff] hover:underline">CV</a>
+              <a href="#" className="text-[#F8FC68] hover:underline">Email</a>,{" "}
+              <a href="#" className="text-[#F8FC68] hover:underline">LinkedIn</a>,{" "}
+              <a href="#" className="text-[#F8FC68] hover:underline">Instagram</a>,{" "}
+              <a href="#" className="text-[#F8FC68] hover:underline">CV</a>
             </p>
           </article>
         )}

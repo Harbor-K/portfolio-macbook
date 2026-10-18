@@ -8,4 +8,7 @@ export type Track = { title: string; artist: string; src: string };
 export const labelImage =
   "https://cdn.jsdelivr.net/gh/Harbor-K/portfolio-macbook@ad47edc72dc9f58af99e149aa7fc38799f0c8e6f/wallpaper/pink-sky.jpg";
 
-export const tracks: Track[] = [{ title: "The Remedy (I Won't Worry)", artist: "Jason Mraz", src: "" }];
+// Harbor's own recording, hosted in the repo (audio/) via jsDelivr, pinned to a commit.
+const audio = "https://cdn.jsdelivr.net/gh/Harbor-K/portfolio-macbook@b5d0821a24446328cf0059f024c4a4a5b6ed817e/audio";
+
+export const tracks: Track[] = [{ title: "The Remedy (I Won't Worry)", artist: "Jason Mraz", src: `${audio}/spin-it-track-01.m4a` }];
