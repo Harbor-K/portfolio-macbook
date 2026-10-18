@@ -127,6 +127,7 @@ button {
 .theme-dark [data-themed] .border-black\/\[0\.08\]:not([data-keep-light], [data-keep-light] *) { border-color: rgba(255,255,255,0.1); }
 .theme-dark [data-themed] .border-black\/\[0\.1\]:not([data-keep-light], [data-keep-light] *) { border-color: rgba(255,255,255,0.12); }
 .theme-dark [data-themed] .border-black\/10:not([data-keep-light], [data-keep-light] *) { border-color: rgba(255,255,255,0.12); }
+.theme-dark [data-themed] .border-black\/25:not([data-keep-light], [data-keep-light] *) { border-color: rgba(255,255,255,0.32); }
 
 .theme-dark nav[aria-label="Dock"] > div {
   background-color: rgba(30, 30, 32, 0.38);
@@ -151,7 +152,8 @@ button {
 /* ---------- Accessibility (System Settings > Accessibility) ---------- */
 
 /* Keyboard focus is always visible (WCAG 2.4.7 Focus Visible). */
-:focus-visible {
+/* Text fields are left out: they already show a caret (and a blue border where styled). */
+:focus-visible:not(input):not(textarea) {
   outline: 2px solid var(--system-blue);
   outline-offset: 2px;
 }

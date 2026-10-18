@@ -5,3 +5,14 @@ const order = ["var(--system-blue)", "var(--system-blue)", "var(--system-green)"
 export function tagColorFor(index: number) {
   return order[index % order.length];
 }
+
+// The name of each tag color, as listed in Finder's sidebar (used on the mobile project cards).
+const names: Record<string, string> = {
+  "var(--system-blue)": "2026",
+  "var(--system-green)": "2025",
+  "var(--system-orange)": "2024-2022",
+};
+
+export function tagNameFor(index: number) {
+  return names[tagColorFor(index)];
+}

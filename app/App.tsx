@@ -14,6 +14,7 @@ import { notes } from "./data/notes";
 import { Settings, type ThemeSetting } from "./components/Settings";
 import type { A11ySettings } from "./components/AccessibilityPane";
 import { SpinIt } from "./components/SpinIt";
+import { MobileSafari } from "./components/MobileSafari";
 import { aboutIcon, aboutPortrait, aboutVideo } from "./data/aboutVideo";
 import { type DockApp, dockSections, settingsIcon, spinItIcon } from "./data/dock";
 import { projects, type Project } from "./data/portfolio";
@@ -151,6 +152,20 @@ function useSystemDark() {
   return dark;
 }
 
+// Phones get the mobile layout (an iOS Safari-style start page) instead of the desktop.
+const mobileQuery = "(max-width: 767px)";
+function useIsMobile() {
+  const query = typeof window !== "undefined" && window.matchMedia ? window.matchMedia(mobileQuery) : null;
+  const [mobile, setMobile] = useState(() => Boolean(query?.matches));
+  useEffect(() => {
+    if (!query) return;
+    const onChange = (event: MediaQueryListEvent) => setMobile(event.matches);
+    query.addEventListener?.("change", onChange);
+    return () => query.removeEventListener?.("change", onChange);
+  }, [query]);
+  return mobile;
+}
+
 export function App() {
   const now = useLocalClock();
   const screenInit = useScreenInit() as ScreenInit;
@@ -188,8 +203,12 @@ export function App() {
   const [llmOpen, setLlmOpen] = useState(false);
   // Which note the Notes window opens on (set when a note is opened from Finder > Documents).
   const [noteId, setNoteId] = useState<string | undefined>(undefined);
-  // Every visit starts in Light mode; Dark/Auto apply only until the page is reloaded.
-  const [theme, setTheme] = useState<ThemeSetting>("light");
+  const isMobile = useIsMobile();
+  // Every desktop visit starts in Light mode; on phones it starts on Auto, following the phone's own
+  // light/dark setting like iOS Safari. Changes apply only until the page is reloaded.
+  const [theme, setTheme] = useState<ThemeSetting>(() =>
+    typeof window !== "undefined" && window.matchMedia?.(mobileQuery).matches ? "auto" : "light",
+  );
   const [wallpaperId, setWallpaperId] = useState(() => {
     const saved = readSetting("harbor.wallpaper");
     return wallpapers.some((w) => w.id === saved) ? (saved as string) : defaultWallpaperId;
@@ -348,10 +367,16 @@ export function App() {
 
   return (
     <main
-      className={`relative h-screen w-full overflow-hidden text-[13px] leading-4 ${isDark ? "theme-dark" : ""} ${a11y.reduceMotion ? "a11y-reduce-motion" : ""} ${
+      className={`relative ${isMobile ? "h-[100dvh]" : "h-screen"} w-full overflow-hidden text-[13px] leading-4 ${isDark ? "theme-dark" : ""} ${a11y.reduceMotion ? "a11y-reduce-motion" : ""} ${
         a11y.increaseContrast ? "a11y-contrast" : ""
       } ${a11y.largerText ? "a11y-large-text" : ""}`}
     >
+      {isMobile ? (
+        <>
+          <MobileSafari theme={theme} onThemeChange={changeTheme} a11y={a11y} onA11yChange={changeA11y} onAskKim={() => setLlmOpen(true)} />
+          <KimLLM open={llmOpen} onClose={() => setLlmOpen(false)} />
+        </>
+      ) : (
       <div className="relative h-full min-w-[1040px] overflow-hidden" onClick={() => setSelectedIcon(null)}>
         {/* Wallpaper. In dark mode it fades from day to night over ~1.6 s: the photo dims and cools,
             a navy sky wash and a few stars fade in. A wallpaper with its own nightSrc crossfades to that photo instead. */}
@@ -627,6 +652,7 @@ export function App() {
 
         <Dock sections={dockSections} isRunning={(app) => Boolean(app.running || (app.action && openWindows[app.action]))} onOpen={openFromDock} minimized={minimizedInDock} />
       </div>
+      )}
     </main>
   );
 }
