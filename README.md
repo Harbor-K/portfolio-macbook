@@ -5,8 +5,8 @@ Image assets for Harbor's macOS-style portfolio site.
 - `wallpaper/field.jpg` — desktop wallpaper, field (2576×1932)
 - `wallpaper/rooftops.jpg` — desktop wallpaper, rooftops at sunset (3206×1796)
 - `wallpaper/pink-sky.jpg`, `wallpaper/seaside.jpg`, `wallpaper/park-sunset.jpg` — more wallpapers (System Settings > Wallpaper)
-- `video/about.mp4` — Photo Booth video for the About window (H.264/AAC MP4)
-- `video/about-poster.jpg` — poster frame for that video
+- `video/intro.mp4` — Photo Booth intro video for the About window (H.264/AAC MP4)
+- `video/intro-poster.jpg` — poster frame for that video
 - `about/portrait.jpg` — portrait for the desktop About icon
 - `cv/cv.pdf` — downloadable CV (replace with the real CV under the same name)
 - `icons/projects-folder.png` — desktop Projects folder icon (from harbor_project.svg, 256px wide)
