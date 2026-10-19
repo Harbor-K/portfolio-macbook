@@ -92,12 +92,9 @@ export function SpinIt({ dragHandleProps, lights }: { dragHandleProps: DragHandl
         >
           {/* sheen */}
           <span className="absolute inset-0 rounded-full bg-[conic-gradient(from_210deg,transparent_0deg,rgba(255,255,255,0.10)_35deg,transparent_80deg,transparent_180deg,rgba(255,255,255,0.07)_225deg,transparent_270deg)]" />
-          {/* photo label with thin rings */}
-          <span className="absolute left-1/2 top-1/2 h-[78px] w-[78px] -translate-x-1/2 -translate-y-1/2 rounded-full p-[3px] shadow-[0_0_0_1px_rgba(255,255,255,0.12)]">
-            <span className="block h-full w-full overflow-hidden rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.25)]">
-              <img src={labelImage} alt="" className="h-full w-full object-cover" draggable={false} />
-            </span>
-            <span className="absolute left-1/2 top-1/2 h-[6px] w-[6px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1a1a1d] shadow-[0_0_0_1.5px_rgba(255,255,255,0.7)]" />
+          {/* centre label: the track's artwork */}
+          <span className="absolute left-1/2 top-1/2 h-[86px] w-[86px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full shadow-[0_0_0_2px_rgba(0,0,0,0.35)]">
+            <img src={labelImage} alt="" className="h-full w-full object-cover" draggable={false} />
           </span>
         </div>
 
@@ -118,11 +115,11 @@ export function SpinIt({ dragHandleProps, lights }: { dragHandleProps: DragHandl
 
       {/* Title, progress and controls */}
       <div className="relative z-10 flex min-w-0 flex-1 flex-col pl-3" onPointerDown={(e) => e.stopPropagation()} style={{ color: ink }}>
-        <p className="line-clamp-2 font-serif text-[20px] font-bold leading-[24px]" style={{ textShadow }} title={track?.title}>
+        <p className="line-clamp-2 font-serif text-[24px] font-bold leading-[28px]" style={{ textShadow }} title={track?.title}>
           {track?.title ?? "Spin it"}
         </p>
         <p className="truncate font-serif text-[16px] font-semibold leading-[20px] opacity-85" style={{ textShadow }}>
-          {track?.artist ?? "Songs coming soon"}
+          {track ? `by ${track.artist}` : "Songs coming soon"}
         </p>
 
         <div
@@ -148,7 +145,7 @@ export function SpinIt({ dragHandleProps, lights }: { dragHandleProps: DragHandl
         </div>
         <div className="mt-0.5 flex justify-between text-[12px] font-medium tabular-nums" style={{ textShadow }}>
           <span>{clock(current)}</span>
-          <span>{hasAudio ? clock(duration) : "–:––"}</span>
+          <span>{hasAudio ? clock(duration || track?.seconds || 0) : "–:––"}</span>
         </div>
 
         <div className="mt-1.5 flex items-center justify-between px-1">
