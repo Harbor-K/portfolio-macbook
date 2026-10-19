@@ -31,12 +31,12 @@ body,
   margin: 0;
 }
 /* The desktop fills the window exactly, like a real screen: no page scrolling and no scrollbar
-   appearing at the right edge on hover. */
+   appearing at the right edge on hover. (No overscroll-behavior here: on a Mac it can stop
+   two-finger panning after a trackpad pinch-zoom.) */
 html,
 body {
   height: 100%;
   overflow: hidden;
-  overscroll-behavior: none;
   scrollbar-width: none;
 }
 html::-webkit-scrollbar,
