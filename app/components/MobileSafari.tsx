@@ -15,7 +15,7 @@ import {
 import type { DragHandleProps } from "./MacWindow";
 import { AccessibilityPane, type A11ySettings } from "./AccessibilityPane";
 import type { ThemeSetting } from "./Settings";
-import { MeetingBooking } from "./MeetingBooking";
+import { Reminders } from "./Reminders";
 import { SpinIt } from "./SpinIt";
 import { caseStudies } from "../data/caseStudies";
 import { projects } from "../data/portfolio";
@@ -197,7 +197,7 @@ export function MobileSafari({
           {page.kind === "about" && <AboutPage go={go} />}
           {page.kind === "meet" && (
             <div className="h-full pb-[96px]">
-              <MeetingBooking dragHandleProps={noDrag} lights={null} />
+              <Reminders dragHandleProps={noDrag} lights={null} />
             </div>
           )}
           {page.kind === "spinit" && (

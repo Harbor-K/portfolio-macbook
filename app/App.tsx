@@ -247,7 +247,7 @@ export function App() {
   const systemDark = useSystemDark();
   const isDark = theme === "dark" || (theme === "auto" && systemDark);
   const wallpaper = wallpapers.find((w) => w.id === wallpaperId) ?? wallpapers[0];
-  // Plain wallpapers are light in Light mode and dark in Dark mode; photos always count as dark.
+  // White wallpaper: dark labels and a light menu bar. Black wallpaper: white labels.
   const tone: "light" | "dark" = wallpaper.tone;
 
   // Light and Dark also switch the wallpaper to plain white or plain black, so the two always match.
@@ -328,9 +328,8 @@ export function App() {
   const projectsFrame = sideWindowFrame(stackFor("projects"));
   const cvFrame = sideWindowFrame(stackFor("cv"));
   const notesFrame = sideWindowFrame(stackFor("notes"));
-  // Reminders opens in the same cascade slot but at a narrower, list-like size.
+  // The other windows open at their own sizes in the same free area.
   const remindersFrame = windowFrame(windowSizes.reminders, stackFor("reminders"));
-  // System Settings opens compact and low, just above the Dock, so the sky (and the night moon) stays visible.
   const settingsFrame = windowFrame(windowSizes.settings, stackFor("settings"));
   const spinItFrame = windowFrame(windowSizes.spinit, stackFor("spinit"));
   const introFrame = windowFrame(windowSizes.about, stackFor("about"));
