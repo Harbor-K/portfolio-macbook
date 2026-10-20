@@ -23,6 +23,8 @@ export type FinderItem = {
   imageBg?: string;
   tagColor?: string;
   kind: string;
+  /** One line about what the item is, shown in the status bar on hover. */
+  hint?: string;
   onOpen?: () => void;
 };
 
@@ -59,6 +61,7 @@ export function Finder({
   const [history, setHistory] = useState<Place[]>([{ type: "location", id: "projects" }]);
   const [cursor, setCursor] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
   const [view, setView] = useState<"icons" | "list">("icons");
   const place = history[cursor];
 
@@ -162,7 +165,7 @@ export function Finder({
             <p className="mt-16 text-center text-[13px] text-black/40">{title} is empty</p>
           ) : view === "icons" ? (
             /* Icons reflow to fill the width as the window is resized, like Finder's icon view. */
-            <ul className="grid grid-cols-[repeat(auto-fill,minmax(112px,1fr))] gap-x-2 gap-y-4 pt-2" aria-label={title}>
+            <ul className="grid grid-cols-[repeat(auto-fill,minmax(176px,1fr))] gap-x-4 gap-y-6 pt-3" aria-label={title} onMouseLeave={() => setHovered(null)}>
               {items.map((item) => {
                 const isSel = selected === item.id;
                 return (
@@ -174,22 +177,25 @@ export function Finder({
                         setSelected(item.id);
                       }}
                       onDoubleClick={() => item.onOpen?.()}
-                      className="flex w-full flex-col items-center gap-1.5 outline-none"
+                      onMouseEnter={() => setHovered(item.id)}
+                      onFocus={() => setHovered(item.id)}
+                      aria-label={`${item.title}${item.hint ? `, ${item.hint}` : ""}${item.onOpen ? ", double-click to open" : ""}`}
+                      className="group flex w-full flex-col items-center gap-2 outline-none"
                     >
-                      <span className={`flex h-[76px] w-[100px] items-center justify-center rounded-[8px] ${isSel ? "bg-black/[0.08]" : ""}`}>
+                      <span className={`flex h-[118px] w-[164px] items-center justify-center rounded-[10px] transition-colors ${isSel ? "bg-black/[0.08]" : "group-hover:bg-black/[0.04]"}`}>
                         {item.look === "thumb" ? (
                           <img
                             src={item.image}
                             alt=""
-                            className={`h-[58px] w-[84px] rounded-[3px] shadow-[0_1px_3px_rgba(0,0,0,0.25),0_0_0_0.5px_rgba(0,0,0,0.15)] ${item.imageFit === "contain" ? "object-contain" : "object-cover"}`}
+                            className={`h-[96px] w-[148px] rounded-[5px] shadow-[0_2px_6px_rgba(0,0,0,0.22),0_0_0_0.5px_rgba(0,0,0,0.15)] transition-transform duration-200 group-hover:-translate-y-0.5 ${item.imageFit === "contain" ? "object-contain" : "object-cover"}`}
                             style={item.imageBg ? { background: item.imageBg } : undefined}
                             draggable={false}
                           />
                         ) : (
-                          <img src={item.image} alt="" className="h-[60px] w-[60px] object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]" draggable={false} />
+                          <img src={item.image} alt="" className="h-[84px] w-[84px] object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]" draggable={false} />
                         )}
                       </span>
-                      <span className={`flex max-w-[110px] items-center gap-1 rounded-[4px] px-1.5 py-px text-[12px] leading-[15px] ${isSel ? "bg-[color:var(--system-blue)] text-white" : "text-black/85"}`}>
+                      <span className={`flex max-w-[164px] items-center gap-1.5 rounded-[5px] px-1.5 py-px text-[13px] font-medium leading-[16px] ${isSel ? "bg-[color:var(--system-blue)] text-white" : "text-black/85"}`}>
                         {item.tagColor && <span className="h-[8px] w-[8px] shrink-0 rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.45)]" style={{ background: item.tagColor }} />}
                         <span className="truncate">{item.title}</span>
                       </span>
@@ -217,6 +223,8 @@ export function Finder({
                         setSelected(item.id);
                       }}
                       onDoubleClick={() => item.onOpen?.()}
+                      onMouseEnter={() => setHovered(item.id)}
+                      onMouseLeave={() => setHovered(null)}
                       className={`cursor-default ${isSel ? "bg-[color:var(--system-blue)] text-white" : index % 2 ? "bg-black/[0.03]" : ""}`}
                     >
                       <td className="flex items-center gap-2 rounded-l-[6px] py-1 pl-2">
@@ -236,7 +244,28 @@ export function Finder({
             </table>
           )}
         </div>
+
+        {/* Status bar: says what the hovered (or selected) item is and how to open it. */}
+        <StatusBar item={items.find((i) => i.id === (hovered ?? selected)) ?? null} count={items.length} />
       </div>
+    </div>
+  );
+}
+
+function StatusBar({ item, count }: { item: FinderItem | null; count: number }) {
+  return (
+    <div className="flex h-[30px] shrink-0 items-center gap-2 border-t border-black/[0.08] px-4 text-[12px] text-black/55" aria-live="polite">
+      {item ? (
+        <>
+          <span className="font-semibold text-black/80">{item.title}</span>
+          <span className="truncate">{item.hint ?? item.kind}</span>
+          {item.onOpen && <span className="ml-auto shrink-0 text-[color:var(--system-blue)]">Double-click to open</span>}
+        </>
+      ) : (
+        <span>
+          {count} {count === 1 ? "item" : "items"} · Point at an item to see what it is, double-click to open it
+        </span>
+      )}
     </div>
   );
 }

@@ -3,6 +3,9 @@ import { ArchiveIcon, AtSignIcon, Disc3Icon, FileTextIcon, FolderIcon, HelpCircl
 
 type DesktopIconKind = "folder" | "avatar" | "image" | "pdf" | "disc" | "globe" | "contact" | "archive" | "news" | "flag";
 
+/** What a desktop item opens, shown in a small card when the pointer rests on it (or it has keyboard focus). */
+export type IconHint = { eyebrow?: string; title: string; body?: string; action?: string };
+
 type DesktopIconProps = {
   label: string;
   kind: DesktopIconKind;
@@ -11,17 +14,51 @@ type DesktopIconProps = {
   /** Shown if imageSrc fails to load (e.g. not uploaded yet). */
   fallbackSrc?: string;
   selected?: boolean;
+  /** "light" wallpaper: dark labels without a shadow; "dark" (photo) wallpaper: white labels with a shadow. */
+  tone?: "light" | "dark";
+  hint?: IconHint;
   onSelect?: () => void;
   onOpen?: () => void;
 };
 
+/** Label colours for desktop items on a light or dark wallpaper. */
+export function labelClass(tone: "light" | "dark", selected: boolean) {
+  if (selected) return "bg-[color:var(--system-blue)] text-white";
+  return tone === "light" ? "text-black/80" : "text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_6px_rgba(0,0,0,0.5)]";
+}
+
+export function selectionClass(tone: "light" | "dark", selected: boolean) {
+  if (!selected) return "";
+  return tone === "light" ? "bg-black/[0.07] ring-1 ring-black/10" : "bg-black/25 ring-1 ring-white/25";
+}
+
+/** Hover card that opens to the left of a desktop item (the icons sit along the right edge). */
+export function HintCard({ hint }: { hint: IconHint }) {
+  return (
+    <span
+      role="tooltip"
+      className="pointer-events-none absolute right-full top-1 z-20 mr-2 w-[232px] translate-x-1 rounded-[12px] border border-black/[0.08] bg-white/95 p-3 text-left opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.18)] backdrop-blur-xl transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100 group-hover:delay-300 group-focus-visible:translate-x-0 group-focus-visible:opacity-100"
+    >
+      {hint.eyebrow && <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-black/45">{hint.eyebrow}</span>}
+      <span className="mt-0.5 block text-[13px] font-semibold leading-[17px] text-black/85">{hint.title}</span>
+      {hint.body && <span className="mt-1 block text-[12px] leading-[16px] text-black/60">{hint.body}</span>}
+      {hint.action && (
+        <span className="mt-2 flex items-center gap-1.5 border-t border-black/[0.08] pt-2 text-[11px] font-medium text-[color:var(--system-blue)]">
+          {hint.action}
+        </span>
+      )}
+    </span>
+  );
+}
+
 // macOS desktop: single click selects, double click opens.
-// Labels are 12 pt white with a soft shadow; a selected label gets a blue rounded highlight.
-export function DesktopIcon({ label, kind, className = "", imageSrc, fallbackSrc, selected, onSelect, onOpen }: DesktopIconProps) {
+// Labels follow the wallpaper (dark on the plain Studio wallpaper, white with a shadow on photos);
+// a selected label gets a blue rounded highlight. Resting the pointer on an item shows what it opens.
+export function DesktopIcon({ label, kind, className = "", imageSrc, fallbackSrc, selected = false, tone = "dark", hint, onSelect, onOpen }: DesktopIconProps) {
   return (
     <button
       type="button"
-      className={`group flex w-[104px] flex-col items-center gap-[5px] px-1 py-1 text-center outline-none ${className}`}
+      className={`group relative flex w-[120px] flex-col items-center gap-[6px] px-1 py-1 text-center outline-none ${className}`}
       onClick={(event) => {
         event.stopPropagation();
         onSelect?.();
@@ -30,18 +67,13 @@ export function DesktopIcon({ label, kind, className = "", imageSrc, fallbackSrc
       onKeyDown={(event) => {
         if (event.key === "Enter") onOpen?.();
       }}
-      aria-label={`${label}${onOpen ? ", double-click to open" : ""}`}
+      aria-label={`${label}${hint?.body ? `: ${hint.body}` : ""}${onOpen ? ", double-click to open" : ""}`}
     >
-      <span className={`flex h-[68px] w-[72px] items-center justify-center rounded-[6px] ${selected ? "bg-black/25 ring-1 ring-white/25" : ""}`}>
+      <span className={`flex h-[84px] w-[92px] items-center justify-center rounded-[10px] transition-colors ${selectionClass(tone, selected)} ${selected ? "" : "group-hover:bg-black/[0.05]"}`}>
         <IconGlyph kind={kind} imageSrc={imageSrc} fallbackSrc={fallbackSrc} />
       </span>
-      <span
-        className={`max-w-[104px] rounded-[4px] px-1.5 py-px text-[12px] font-bold leading-[15px] ${
-          selected ? "bg-[color:var(--system-blue)] text-white" : "text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_6px_rgba(0,0,0,0.5)]"
-        }`}
-      >
-        {label}
-      </span>
+      <span className={`max-w-[120px] rounded-[5px] px-1.5 py-px text-[13px] font-semibold leading-[16px] ${labelClass(tone, selected)}`}>{label}</span>
+      {hint && <HintCard hint={hint} />}
     </button>
   );
 }
@@ -50,21 +82,21 @@ export function DesktopIcon({ label, kind, className = "", imageSrc, fallbackSrc
 function PlainImage({ src, fallbackSrc }: { src?: string; fallbackSrc?: string }) {
   const [failed, setFailed] = useState(false);
   if (!src || failed) {
-    return fallbackSrc ? <FramedPhoto src={fallbackSrc} /> : <span className="h-[60px] w-[60px] rounded-[12px] bg-white/40" />;
+    return fallbackSrc ? <FramedPhoto src={fallbackSrc} /> : <span className="h-[72px] w-[72px] rounded-[14px] bg-white/40" />;
   }
   return (
     <img
       src={src}
       alt=""
       onError={() => setFailed(true)}
-      className="h-[64px] w-[64px] object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
+      className="h-[76px] w-[76px] object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
       draggable={false}
     />
   );
 }
 
 function FramedPhoto({ src }: { src: string }) {
-  return <img src={src} alt="" className="h-[60px] w-[60px] rounded-[4px] object-cover object-[50%_30%] shadow-[0_2px_6px_rgba(0,0,0,0.35),0_0_0_2px_#fff]" draggable={false} />;
+  return <img src={src} alt="" className="h-[72px] w-[72px] rounded-[4px] object-cover object-[50%_30%] shadow-[0_2px_6px_rgba(0,0,0,0.35),0_0_0_2px_#fff]" draggable={false} />;
 }
 
 function IconGlyph({ kind, imageSrc, fallbackSrc }: { kind: DesktopIconKind; imageSrc?: string; fallbackSrc?: string }) {

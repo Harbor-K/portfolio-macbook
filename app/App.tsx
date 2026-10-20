@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { DesktopIcon } from "./components/DesktopIcon";
+import { DesktopIcon, HintCard, labelClass, selectionClass, type IconHint } from "./components/DesktopIcon";
 import { Dock, type MinimizedWindow } from "./components/Dock";
 import { Finder, type FinderItem, type FinderLocation } from "./components/Finder";
 import { MacWindow, type WindowSize } from "./components/MacWindow";
-import { PhotoBooth } from "./components/PhotoBooth";
+import { IntroCall } from "./components/IntroCall";
 import { Preview } from "./components/Preview";
 import { Browser } from "./components/Browser";
 import { caseStudies } from "./data/caseStudies";
@@ -41,8 +41,8 @@ type ScreenInit = {
   photoBoothInfo?: boolean;
 };
 
-const windowTitles: Record<BaseWindow, string> = { projects: "Projects", about: "Photo Booth", cv: "CV.pdf", reminders: "Reminders", notes: "Notes", settings: "System Settings", spinit: "Spin it" };
-const appNames: Record<BaseWindow, string> = { projects: "Finder", about: "Photo Booth", cv: "Preview", reminders: "Reminders", notes: "Notes", settings: "System Settings", spinit: "Spin it" };
+const windowTitles: Record<BaseWindow, string> = { projects: "Projects", about: "Intro", cv: "CV.pdf", reminders: "Reminders", notes: "Notes", settings: "System Settings", spinit: "Spin it" };
+const appNames: Record<BaseWindow, string> = { projects: "Finder", about: "Intro", cv: "Preview", reminders: "Reminders", notes: "Notes", settings: "System Settings", spinit: "Spin it" };
 const appNameOf = (name: WindowName) => (isCase(name) ? "Safari" : appNames[name]);
 
 
@@ -52,19 +52,22 @@ const photoBoothFrame = { x: 20, y: 40, w: 420, h: 368 };
 // The Spin it turntable sits just under Photo Booth, the same width.
 const spinItFrame = { x: photoBoothFrame.x, y: photoBoothFrame.y + photoBoothFrame.h + 16, w: photoBoothFrame.w, h: 212 };
 const windowGap = 16;
-const desktopIconsWidth = 244; // stop just short of the two desktop icon columns on the right
+const desktopIconsWidth = 336; // stop just short of the two desktop icon columns on the right
 const dockClearance = 92; // end just above the Dock, with a small gap
 const cascadeStep = { x: 40, y: 30 }; // each extra side window opens this far down-right of the last, like macOS cascading
 const maxCascade = 6; // after this many, start again from the first position so windows stay on screen
 // The desktop never gets smaller than this. When the visitor zooms the browser in and the window is
 // smaller, the page scrolls instead of cutting the desktop off.
 const minDesktop = { w: 1040, h: 680 };
-const viewportHeight = () => Math.max(typeof window === "undefined" ? 800 : window.innerHeight, minDesktop.h);
+// The desktop sits inset in the browser window, like a screen on a calm backdrop.
+const framePad = 14;
+const viewportWidth = () => Math.max((typeof window === "undefined" ? 1280 : window.innerWidth) - framePad * 2, minDesktop.w);
+const viewportHeight = () => Math.max((typeof window === "undefined" ? 800 : window.innerHeight) - framePad * 2, minDesktop.h);
 
 // `stack` = how many side windows are already open; each one pushes the new window down and to the
 // right so the windows overlap but every title bar stays visible.
 function sideWindowFrame(stack: number): { position: { x: number; y: number }; size: WindowSize } {
-  const viewportW = Math.max(typeof window === "undefined" ? 1280 : window.innerWidth, minDesktop.w);
+  const viewportW = viewportWidth();
   const viewportH = viewportHeight();
   const baseX = photoBoothFrame.x + photoBoothFrame.w + windowGap;
   const baseY = photoBoothFrame.y;
@@ -206,7 +209,7 @@ export function App() {
     typeof window !== "undefined" && window.matchMedia?.(mobileQuery).matches ? "auto" : "light",
   );
   const [wallpaperId, setWallpaperId] = useState(() => {
-    const saved = readSetting("harbor.wallpaper");
+    const saved = readSetting("harbor.wallpaper.v2");
     return wallpapers.some((w) => w.id === saved) ? (saved as string) : defaultWallpaperId;
   });
   // Accessibility toggles (System Settings > Accessibility). Remembered in this browser; Reduce motion
@@ -230,13 +233,15 @@ export function App() {
   const systemDark = useSystemDark();
   const isDark = theme === "dark" || (theme === "auto" && systemDark);
   const wallpaper = wallpapers.find((w) => w.id === wallpaperId) ?? wallpapers[0];
+  // Plain wallpapers are light in Light mode and dark in Dark mode; photos always count as dark.
+  const tone: "light" | "dark" = wallpaper.gradient && !isDark ? "light" : "dark";
 
   function changeTheme(next: ThemeSetting) {
     setTheme(next);
   }
   function changeWallpaper(id: string) {
     setWallpaperId(id);
-    writeSetting("harbor.wallpaper", id);
+    writeSetting("harbor.wallpaper.v2", id);
   }
 
   // ⌘K / Ctrl+K toggles Kim LLM, like Spotlight.
@@ -342,29 +347,30 @@ export function App() {
     imageBg: project.imageBg,
     tagColor: tagColorFor(index),
     kind: "Case study",
+    hint: caseStudies[project.title]?.eyebrow.replace("Case Study · ", ""),
     onOpen: () => openProject(project),
   }));
-  const cvItem: FinderItem = { id: "cv", title: "CV.pdf", image: cvPdfIcon, look: "icon", kind: "PDF document", onOpen: () => openWindow("cv") };
+  const cvItem: FinderItem = { id: "cv", title: "CV.pdf", image: cvPdfIcon, look: "icon", kind: "PDF document", hint: "CV — experience, projects and skills; download as PDF", onOpen: () => openWindow("cv") };
   const finderLocations: Record<FinderLocation, FinderItem[]> = {
     projects: projectItems,
     desktop: [
       ...projectItems,
-      { id: "about", title: "About", image: aboutIcon, look: "icon", kind: "Photo Booth", onOpen: () => openWindow("about") },
-      { id: "folder", title: "Projects", image: projectFolderIcon, look: "icon", kind: "Folder", onOpen: () => openWindow("projects") },
+      { id: "about", title: "About", image: aboutIcon, look: "icon", kind: "Intro", hint: "Intro video & profile", onOpen: () => openWindow("about") },
+      { id: "folder", title: "Projects", image: projectFolderIcon, look: "icon", kind: "Folder", hint: "All four case studies", onOpen: () => openWindow("projects") },
       cvItem,
-      { id: "book", title: "Book", image: archiveBookIcon, look: "icon", kind: "Book" },
-      { id: "notes", title: "Notes", image: notesIcon, look: "icon", kind: "Application", onOpen: () => openWindow("notes") },
+      { id: "book", title: "Book", image: archiveBookIcon, look: "icon", kind: "Book", hint: "Coming soon" },
+      { id: "notes", title: "Notes", image: notesIcon, look: "icon", kind: "Application", hint: "How I work, what I value, and a fun fact", onOpen: () => openWindow("notes") },
     ],
     documents: [
       cvItem,
-      ...notes.map<FinderItem>((note) => ({ id: `note:${note.id}`, title: note.file, image: notesIcon, look: "icon", kind: "Note", onOpen: () => openNote(note.id) })),
+      ...notes.map<FinderItem>((note) => ({ id: `note:${note.id}`, title: note.file, image: notesIcon, look: "icon", kind: "Note", hint: note.subtitle, onOpen: () => openNote(note.id) })),
     ],
     downloads: [],
   };
 
   return (
     <main
-      className={`relative ${isMobile ? "h-[100dvh] overflow-hidden" : "h-screen overflow-auto"} w-full text-[13px] leading-4 ${isDark ? "theme-dark" : ""} ${a11y.reduceMotion ? "a11y-reduce-motion" : ""} ${
+      className={`relative ${isMobile ? "h-[100dvh] overflow-hidden" : `h-screen overflow-auto p-[14px] ${isDark ? "bg-[#0b0b0c]" : "bg-[#dedbd5]"}`} w-full text-[13px] leading-4 ${isDark ? "theme-dark" : ""} ${a11y.reduceMotion ? "a11y-reduce-motion" : ""} ${
         a11y.increaseContrast ? "a11y-contrast" : ""
       } ${a11y.largerText ? "a11y-large-text" : ""}`}
     >
@@ -374,10 +380,17 @@ export function App() {
           <KimLLM open={llmOpen} onClose={() => setLlmOpen(false)} />
         </>
       ) : (
-      <div className="relative h-full min-h-[680px] min-w-[1040px] overflow-hidden" onClick={() => setSelectedIcon(null)}>
+      <div
+        className={`relative h-full min-h-[680px] min-w-[1040px] overflow-hidden rounded-[18px] shadow-[0_24px_60px_rgba(0,0,0,0.16),0_0_0_1px_rgba(0,0,0,0.08)] ${tone === "light" ? "desk-light" : ""}`}
+        onClick={() => setSelectedIcon(null)}
+      >
         {/* Wallpaper. In dark mode it fades from day to night over ~1.6 s: the photo dims and cools,
             a navy sky wash and a few stars fade in. A wallpaper with its own nightSrc crossfades to that photo instead. */}
         <div key={wallpaper.id} className="absolute inset-0 animate-[wallpaperIn_400ms_ease-out]">
+          {wallpaper.gradient ? (
+            <div aria-hidden="true" className="absolute inset-0" style={{ background: isDark ? wallpaper.gradient.dark : wallpaper.gradient.light }} />
+          ) : (
+          <>
           <img
             src={wallpaper.src}
             alt=""
@@ -435,10 +448,18 @@ export function App() {
               />
             </>
           )}
+          </>
+          )}
         </div>
 
         {/* Menu bar: 24 pt tall (Apple HIG > The menu bar) */}
-        <header className="absolute inset-x-0 top-0 z-[100] flex h-[24px] select-none items-center justify-between bg-gradient-to-b from-black/25 to-black/5 px-[10px] text-[13px] text-white [text-shadow:0_0_4px_rgba(0,0,0,0.35)]">
+        <header
+          className={`absolute inset-x-0 top-0 z-[100] flex h-[24px] select-none items-center justify-between px-[10px] text-[13px] ${
+            tone === "light"
+              ? "border-b border-black/[0.06] bg-white/60 text-black/85 backdrop-blur-xl"
+              : "bg-gradient-to-b from-black/25 to-black/5 text-white [text-shadow:0_0_4px_rgba(0,0,0,0.35)]"
+          }`}
+        >
           <nav className="flex items-center" aria-label="Menu bar">
             {/* Harbor's logo (harbor_icon.svg) sits 8px before her name, like the Apple logo in the macOS menu bar. */}
             <span className="flex items-center gap-[8px] rounded-[5px] px-[9px] py-[2px] font-semibold">
@@ -456,7 +477,9 @@ export function App() {
                 event.stopPropagation();
                 setLlmOpen((value) => !value);
               }}
-              className={`-mr-[4px] flex items-center gap-[5px] rounded-[5px] px-[8px] py-[2px] font-medium ${llmOpen ? "bg-white/30" : "hover:bg-white/20"}`}
+              className={`-mr-[4px] flex items-center gap-[5px] rounded-[5px] px-[8px] py-[2px] font-medium ${
+                tone === "light" ? (llmOpen ? "bg-black/[0.08]" : "hover:bg-black/[0.05]") : llmOpen ? "bg-white/30" : "hover:bg-white/20"
+              }`}
             >
               <KimLlmGlyph />
               Kim LLM
@@ -468,25 +491,29 @@ export function App() {
         </header>
 
         {/* Two columns: projects on the left, system items on the right */}
-        <section aria-label="Desktop" className="absolute right-[18px] top-[40px] z-10 flex items-start gap-x-[10px]">
-          <div className="flex flex-col gap-y-[4px]">
+        <section aria-label="Desktop" className="absolute right-[28px] top-[44px] z-10 flex items-start gap-x-[20px]">
+          <div className="flex flex-col gap-y-[14px]">
             {projects.map((project, index) => (
               <ProjectIcon
                 key={project.title}
                 project={project}
                 tagColor={tagColorFor(index)}
+                tone={tone}
+                hint={projectHint(project.title)}
                 selected={selectedIcon === project.title}
                 onSelect={() => setSelectedIcon(project.title)}
                 onOpen={() => openProject(project)}
               />
             ))}
           </div>
-          <div className="flex flex-col gap-y-[4px]">
+          <div className="flex flex-col gap-y-[10px]">
             <DesktopIcon
               label="About"
               kind="image"
               imageSrc={aboutIcon}
               fallbackSrc={aboutPortrait}
+              tone={tone}
+              hint={{ eyebrow: "About", title: "Intro video & profile", body: "A short intro, who I am, and how to book a call.", action: "Double-click to open" }}
               selected={selectedIcon === "About"}
               onSelect={() => setSelectedIcon("About")}
               onOpen={() => openWindow("about")}
@@ -496,13 +523,27 @@ export function App() {
               label="Projects"
               kind="image"
               imageSrc={projectFolderIcon}
+              tone={tone}
+              hint={{ eyebrow: "Finder", title: "All projects", body: "Browse the four case studies, or filter them by year.", action: "Double-click to open" }}
               selected={selectedIcon === "Projects"}
               onSelect={() => setSelectedIcon("Projects")}
               onOpen={() => openWindow("projects")}
             />
-            <DesktopIcon label="CV.pdf" kind="image" imageSrc={cvPdfIcon} selected={selectedIcon === "CV"} onSelect={() => setSelectedIcon("CV")} onOpen={() => openWindow("cv")} />
-            <DesktopIcon label="Book" kind="image" imageSrc={archiveBookIcon} selected={selectedIcon === "Book"} onSelect={() => setSelectedIcon("Book")} />
-            <DesktopIcon label="Notes" kind="image" imageSrc={notesIcon} selected={selectedIcon === "Notes"} onSelect={() => setSelectedIcon("Notes")} onOpen={() => openWindow("notes")} />
+            <DesktopIcon
+              label="CV.pdf"
+              kind="image"
+              imageSrc={cvPdfIcon}
+              tone={tone}
+              hint={{ eyebrow: "Preview", title: "CV", body: "Experience, projects and skills on one page. Download as PDF.", action: "Double-click to open" }}
+              selected={selectedIcon === "CV"} onSelect={() => setSelectedIcon("CV")} onOpen={() => openWindow("cv")} />
+            <DesktopIcon label="Book" kind="image" imageSrc={archiveBookIcon} tone={tone} hint={{ title: "Book", body: "Coming soon." }} selected={selectedIcon === "Book"} onSelect={() => setSelectedIcon("Book")} />
+            <DesktopIcon
+              label="Notes"
+              kind="image"
+              imageSrc={notesIcon}
+              tone={tone}
+              hint={{ eyebrow: "Notes", title: "How I work", body: "My design approach, what I value in a team, and a fun fact.", action: "Double-click to open" }}
+              selected={selectedIcon === "Notes"} onSelect={() => setSelectedIcon("Notes")} onOpen={() => openWindow("notes")} />
           </div>
         </section>
 
@@ -632,7 +673,7 @@ export function App() {
 
         {openWindows.about && (
           <MacWindow
-            title="Photo Booth"
+            title="Intro"
             initialPosition={{ x: photoBoothFrame.x, y: photoBoothFrame.y }}
             initialSize={{ w: photoBoothFrame.w, h: photoBoothFrame.h }}
             widthClassName=""
@@ -640,7 +681,7 @@ export function App() {
             minSize={{ w: 420, h: 320 }}
             {...windowProps("about")}
           >
-            <PhotoBooth initialShowInfo={screenInit.photoBoothInfo ?? false} />
+            <IntroCall initialShowInfo={screenInit.photoBoothInfo ?? false} onBookCall={() => openWindow("reminders")} onOpenCv={() => openWindow("cv")} />
           </MacWindow>
         )}
 
@@ -677,15 +718,26 @@ function KimLlmGlyph() {
   );
 }
 
+// What a project opens, for its hover card: the case study's area and headline.
+function projectHint(title: string): IconHint | undefined {
+  const study = caseStudies[title];
+  if (!study) return undefined;
+  return { eyebrow: study.eyebrow.replace("Case Study · ", ""), title: study.title, action: "Double-click to read the case study" };
+}
+
 function ProjectIcon({
   project,
   tagColor,
+  tone,
+  hint,
   selected,
   onSelect,
   onOpen,
 }: {
   project: Project;
   tagColor: string;
+  tone: "light" | "dark";
+  hint?: IconHint;
   selected: boolean;
   onSelect: () => void;
   onOpen: () => void;
@@ -702,26 +754,23 @@ function ProjectIcon({
       onKeyDown={(event) => {
         if (event.key === "Enter") onOpen();
       }}
-      aria-label={`${title}, double-click to open`}
-      className="flex w-[104px] flex-col items-center gap-[5px] px-1 py-1 text-center outline-none"
+      aria-label={`${title}${hint?.eyebrow ? `, ${hint.eyebrow} case study` : ""}, double-click to open`}
+      className="group relative flex w-[150px] flex-col items-center gap-[7px] px-1 py-1 text-center outline-none"
     >
-      <span className={`flex h-[68px] w-[96px] items-center justify-center rounded-[6px] ${selected ? "bg-black/25 ring-1 ring-white/25" : ""}`}>
+      <span className={`flex h-[94px] w-[140px] items-center justify-center rounded-[10px] transition-colors ${selectionClass(tone, selected)} ${selected ? "" : "group-hover:bg-black/[0.05]"}`}>
         <img
           src={image}
           alt=""
-          className={`h-[50px] w-[80px] rounded-[2px] shadow-[0_2px_6px_rgba(0,0,0,0.35),0_0_0_2px_#fff] ${project.imageFit === "contain" ? "object-contain" : "object-cover"}`}
+          className={`h-[76px] w-[120px] rounded-[4px] shadow-[0_3px_10px_rgba(0,0,0,0.25),0_0_0_2px_#fff] transition-transform duration-200 group-hover:-translate-y-0.5 ${project.imageFit === "contain" ? "object-contain" : "object-cover"}`}
           style={project.imageBg ? { background: project.imageBg } : undefined}
           draggable={false}
         />
       </span>
-      <span
-        className={`flex max-w-[104px] items-center gap-1 rounded-[4px] px-1.5 py-px text-[12px] font-bold leading-[15px] ${
-          selected ? "bg-[color:var(--system-blue)] text-white" : "text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_6px_rgba(0,0,0,0.5)]"
-        }`}
-      >
-        <span className="h-[9px] w-[9px] shrink-0 rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.55),0_0_4px_rgba(0,0,0,0.25)]" style={{ background: tagColor }} aria-hidden="true" />
+      <span className={`flex max-w-[150px] items-center gap-1.5 rounded-[5px] px-1.5 py-px text-[13px] font-semibold leading-[16px] ${labelClass(tone, selected)}`}>
+        <span className="h-[9px] w-[9px] shrink-0 rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.4)]" style={{ background: tagColor }} aria-hidden="true" />
         <span className="truncate">{title}</span>
       </span>
+      {hint && <HintCard hint={hint} />}
     </button>
   );
 }

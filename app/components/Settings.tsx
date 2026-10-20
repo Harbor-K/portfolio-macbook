@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { AccessibilityIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, ContrastIcon, FlowerIcon } from "lucide-react";
 import { AccessibilityPane, type A11ySettings } from "./AccessibilityPane";
 import type { DragHandleProps } from "./MacWindow";
-import { wallpapers } from "../data/wallpaper";
+import { type Wallpaper, wallpapers } from "../data/wallpaper";
 
 export type ThemeSetting = "auto" | "light" | "dark";
 
@@ -113,20 +113,14 @@ export function Settings({
           ) : (
             <>
               <div className="flex items-center gap-5">
-                <img
-                  src={currentWallpaper.src}
-                  alt=""
-                  className="h-[120px] w-[192px] shrink-0 rounded-[10px] bg-black/[0.06] object-cover shadow-[0_1px_4px_rgba(0,0,0,0.2)]"
-                  style={{ objectPosition: currentWallpaper.objectPosition }}
-                  draggable={false}
-                />
+                <WallpaperSwatch wallpaper={currentWallpaper} className="h-[120px] w-[192px] shrink-0 rounded-[10px] shadow-[0_1px_4px_rgba(0,0,0,0.2)]" />
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-black/40">Current wallpaper</p>
                   <p className="mt-1 text-[18px] font-semibold text-black/85">{currentWallpaper.name}</p>
                 </div>
               </div>
 
-              <h3 className="mt-5 text-[13px] font-semibold text-black/85">Harbor&apos;s Photos</h3>
+              <h3 className="mt-5 text-[13px] font-semibold text-black/85">Wallpapers</h3>
               {/* One row that scrolls sideways (trackpad, shift+wheel or drag the scrollbar). */}
               <ul className="-mx-6 mt-3 flex snap-x gap-4 overflow-x-auto px-6 pb-2 pt-1">
                 {wallpapers.map((w) => {
@@ -135,13 +129,7 @@ export function Settings({
                     <li key={w.id} className="w-[150px] shrink-0 snap-start">
                       <button type="button" onClick={() => onWallpaperChange(w.id)} className="flex w-full flex-col items-center gap-2 outline-none">
                         <span className={`relative block w-full rounded-[10px] p-[3px] ${isSel ? "ring-[3px] ring-[color:var(--system-blue)]" : ""}`}>
-                          <img
-                            src={w.src}
-                            alt=""
-                            className="aspect-[16/10] w-full rounded-[7px] bg-black/[0.06] object-cover shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
-                            style={{ objectPosition: w.objectPosition }}
-                            draggable={false}
-                          />
+                          <WallpaperSwatch wallpaper={w} className="aspect-[16/10] w-full rounded-[7px] shadow-[0_1px_3px_rgba(0,0,0,0.2)]" />
                           {isSel && (
                             <span className="absolute bottom-[9px] right-[9px] flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[color:var(--system-blue)] shadow">
                               <CheckIcon className="h-[11px] w-[11px] text-white" strokeWidth={3.5} />
@@ -159,6 +147,16 @@ export function Settings({
         </div>
       </section>
     </div>
+  );
+}
+
+// A wallpaper preview: the photo, or the plain gradient (always shown in its light version, with a hairline edge).
+function WallpaperSwatch({ wallpaper, className }: { wallpaper: Wallpaper; className: string }) {
+  if (wallpaper.gradient) {
+    return <span data-keep-light="" className={`block ${className} ring-1 ring-inset ring-black/10`} style={{ background: wallpaper.gradient.light }} />;
+  }
+  return (
+    <img src={wallpaper.src} alt="" className={`bg-black/[0.06] object-cover ${className}`} style={{ objectPosition: wallpaper.objectPosition }} draggable={false} />
   );
 }
 
