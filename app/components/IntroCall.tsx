@@ -14,7 +14,8 @@ export function IntroCall({
   onOpenCv,
 }: {
   initialShowInfo?: boolean;
-  onBookCall: () => void;
+  /** No longer used: "Book a call" now opens Harbor's Cal.com page. Kept so existing callers still compile. */
+  onBookCall?: () => void;
   onOpenCv: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -122,14 +123,16 @@ export function IntroCall({
           <FileTextIcon className="h-[13px] w-[13px]" strokeWidth={2} />
           CV
         </button>
-        <button
-          type="button"
-          onClick={onBookCall}
+        {/* Opens Harbor's Cal.com booking page in a new tab. */}
+        <a
+          href={meeting.bookingUrl}
+          target="_blank"
+          rel="noopener noreferrer"
           className="flex h-[30px] items-center gap-1.5 rounded-[8px] bg-[color:var(--system-blue)] px-3 text-[12px] font-semibold text-white shadow-[0_1px_2px_rgba(0,0,0,0.15)] hover:brightness-105"
         >
           <CalendarClockIcon className="h-[13px] w-[13px]" strokeWidth={2.2} />
           Book a call
-        </button>
+        </a>
       </div>
     </div>
   );

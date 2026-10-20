@@ -8,6 +8,8 @@ export const meeting = {
   title: "30-min chat with Harbor",
   kind: "Video call",
   email: "harborkim0328@gmail.com",
+  /** Harbor's Cal.com booking page, opened by the "Book a call" button in the Intro window. */
+  bookingUrl: "https://cal.com/harbor-kim-wqsmkt/30min",
   hostTimeZoneOffsetHours: 9, // Harbor is in Korea (UTC+9, no daylight saving)
   slotHours: [10, 15, 21], // start times in Harbor's local time
   daysAhead: 10, // how far ahead to offer slots (weekdays only)
