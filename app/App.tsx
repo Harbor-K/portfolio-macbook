@@ -46,9 +46,9 @@ const appNames: Record<BaseWindow, string> = { projects: "Projects", about: "Int
 const appNameOf = (name: WindowName) => (isCase(name) ? "Safari" : appNames[name]);
 
 
-// Window layout. Every window (opened from the Dock, the desktop or Finder) opens centred in the free
-// area to the left of the desktop icons, between the menu bar and the Dock, so it never covers the icons,
-// their hover cards, or the Dock, and never runs off screen.
+// Window layout. Windows open centred on the screen (between the menu bar and the Dock), but never further
+// right than the free area to the left of the desktop icons, so they don't cover the icons or the hover cards
+// that open to the icons' left. Spin it is the exception: it sits in the bottom-right corner, under the icons.
 const desktopIconsWidth = 318; // the two desktop icon columns plus their right margin
 const iconGap = 24; // space between the windows and the icons
 const hintZone = 212; // room for an icon's hover card, kept clear when the screen is wide enough
@@ -89,9 +89,18 @@ function windowFrame(preferred: WindowSize, stack: number): { position: { x: num
   const dy = step * cascadeStep.y;
   const w = Math.max(360, Math.min(preferred.w, area.w - dx));
   const h = Math.max(200, Math.min(preferred.h, area.h - dy));
-  const x = area.left + Math.max(0, Math.round((area.w - w) / 2)) + dx;
+  const x = Math.round((viewportWidth() - w) / 2) + dx;
   const y = area.top + Math.max(0, Math.round((area.h - h) / 2)) + dy;
-  return { position: { x: Math.min(x, area.left + area.w - w), y: Math.min(y, area.top + area.h - h) }, size: { w, h } };
+  return {
+    position: { x: Math.max(area.left, Math.min(x, area.left + area.w - w)), y: Math.min(y, area.top + area.h - h) },
+    size: { w, h },
+  };
+}
+// Bottom of the desktop icon columns (they start 44px down and are about 612px tall).
+const desktopIconsBottom = 44 + 612;
+function spinItCorner(): { position: { x: number; y: number }; size: WindowSize } {
+  const { w, h } = windowSizes.spinit;
+  return { position: { x: viewportWidth() - 32 - w, y: Math.max(desktopIconsBottom + 16, viewportHeight() - 48 - h) }, size: { w, h } };
 }
 const sideWindowFrame = (stack: number) => windowFrame(windowSizes.document, stack);
 
@@ -323,7 +332,7 @@ export function App() {
   });
 
   // Read only when a window first opens: it cascades past however many side windows are already showing.
-  const sideWindows: WindowName[] = ["about", "spinit", "projects", "cv", ...caseWindows, "reminders", "notes", "settings"];
+  const sideWindows: WindowName[] = ["about", "projects", "cv", ...caseWindows, "reminders", "notes", "settings"];
   const stackFor = (name: WindowName) => sideWindows.filter((other) => other !== name && openWindows[other] && !minimized[other]).length;
   const projectsFrame = sideWindowFrame(stackFor("projects"));
   const cvFrame = sideWindowFrame(stackFor("cv"));
@@ -331,7 +340,7 @@ export function App() {
   // The other windows open at their own sizes in the same free area.
   const remindersFrame = windowFrame(windowSizes.reminders, stackFor("reminders"));
   const settingsFrame = windowFrame(windowSizes.settings, stackFor("settings"));
-  const spinItFrame = windowFrame(windowSizes.spinit, stackFor("spinit"));
+  const spinItFrame = spinItCorner();
   const introFrame = windowFrame(windowSizes.about, stackFor("about"));
 
   // A project with a mock article opens it in the Safari-style window; others open the Projects window.
