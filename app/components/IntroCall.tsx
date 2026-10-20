@@ -64,8 +64,8 @@ export function IntroCall({
             ) : (
               <img src={aboutPortrait} alt="Harbor" className="absolute inset-0 h-full w-full object-cover" draggable={false} />
             )}
-            {/* Name tag, as in a video call */}
-            <span className="pointer-events-none absolute bottom-3 left-3 rounded-[8px] bg-black/50 px-2.5 py-1 text-[12px] font-medium text-white backdrop-blur-md">
+            {/* Name tag, as in a video call. Top-left, so it never sits on the subtitles burned into the bottom of the video. */}
+            <span className="pointer-events-none absolute left-3 top-3 rounded-[8px] bg-black/50 px-2.5 py-1 text-[12px] font-medium text-white backdrop-blur-md">
               Harbor · Product Designer
             </span>
             {hasVideo && (

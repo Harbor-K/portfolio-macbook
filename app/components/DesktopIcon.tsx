@@ -32,21 +32,19 @@ export function selectionClass(tone: "light" | "dark", selected: boolean) {
   return tone === "light" ? "bg-black/[0.07] ring-1 ring-black/10" : "bg-black/25 ring-1 ring-white/25";
 }
 
-/** Hover card that opens to the left of a desktop item (the icons sit along the right edge). */
+/** Small hover card that opens to the left of a desktop item (the icons sit along the right edge).
+ *  It is compact, waits half a second before showing (so passing over the icons doesn't flash cards),
+ *  and the windows are laid out to keep this strip clear. */
 export function HintCard({ hint }: { hint: IconHint }) {
   return (
     <span
       role="tooltip"
-      className="pointer-events-none absolute right-full top-1 z-20 mr-2 w-[232px] translate-x-1 rounded-[12px] border border-black/[0.08] bg-white/95 p-3 text-left opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.18)] backdrop-blur-xl transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100 group-hover:delay-300 group-focus-visible:translate-x-0 group-focus-visible:opacity-100"
+      className="pointer-events-none absolute right-full top-2 z-20 mr-1.5 w-[196px] translate-x-1 rounded-[10px] border border-black/[0.08] bg-white/95 px-2.5 py-2 text-left opacity-0 shadow-[0_6px_18px_rgba(0,0,0,0.14)] backdrop-blur-xl transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100 group-hover:delay-500 group-focus-visible:translate-x-0 group-focus-visible:opacity-100"
     >
       {hint.eyebrow && <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-black/45">{hint.eyebrow}</span>}
-      <span className="mt-0.5 block text-[13px] font-semibold leading-[17px] text-black/85">{hint.title}</span>
-      {hint.body && <span className="mt-1 block text-[12px] leading-[16px] text-black/60">{hint.body}</span>}
-      {hint.action && (
-        <span className="mt-2 flex items-center gap-1.5 border-t border-black/[0.08] pt-2 text-[11px] font-medium text-[color:var(--system-blue)]">
-          {hint.action}
-        </span>
-      )}
+      <span className="mt-0.5 block text-[12px] font-semibold leading-[16px] text-black/85">{hint.title}</span>
+      {hint.body && <span className="mt-0.5 block text-[11px] leading-[15px] text-black/55">{hint.body}</span>}
+      {hint.action && <span className="mt-1.5 block text-[11px] font-medium text-[color:var(--system-blue)]">{hint.action}</span>}
     </span>
   );
 }

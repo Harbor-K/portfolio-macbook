@@ -18,7 +18,7 @@ import { WindowPreview } from "./components/WindowPreview";
 import { CompassIcon } from "lucide-react";
 import { MobileSafari } from "./components/MobileSafari";
 import { aboutIcon, aboutPortrait } from "./data/aboutVideo";
-import { type DockApp, dockSections, settingsIcon, spinItIcon } from "./data/dock";
+import { type DockApp, dockSections, finderIcon, settingsIcon, spinItIcon } from "./data/dock";
 import { projects, type Project } from "./data/portfolio";
 import { archiveBookIcon, cvPdfIcon, notesIcon, projectFolderIcon } from "./data/projectFolderIcon";
 import { tagColorFor } from "./data/tags";
@@ -42,43 +42,58 @@ type ScreenInit = {
 };
 
 const windowTitles: Record<BaseWindow, string> = { projects: "Projects", about: "Intro", cv: "CV.pdf", reminders: "Reminders", notes: "Notes", settings: "System Settings", spinit: "Spin it" };
-const appNames: Record<BaseWindow, string> = { projects: "Finder", about: "Intro", cv: "Preview", reminders: "Reminders", notes: "Notes", settings: "System Settings", spinit: "Spin it" };
+const appNames: Record<BaseWindow, string> = { projects: "Projects", about: "Intro", cv: "Preview", reminders: "Reminders", notes: "Notes", settings: "System Settings", spinit: "Spin it" };
 const appNameOf = (name: WindowName) => (isCase(name) ? "Safari" : appNames[name]);
 
 
-// Window layout. Photo Booth sits top-left; Projects and CV open in one tidy slot to its right,
-// stretching down to just above the Dock and stopping short of the desktop icons.
-const photoBoothFrame = { x: 20, y: 40, w: 420, h: 368 };
-// The Spin it turntable sits just under Photo Booth, the same width.
-const spinItFrame = { x: photoBoothFrame.x, y: photoBoothFrame.y + photoBoothFrame.h + 16, w: photoBoothFrame.w, h: 212 };
-const windowGap = 16;
-const desktopIconsWidth = 336; // stop just short of the two desktop icon columns on the right
-const dockClearance = 92; // end just above the Dock, with a small gap
-const cascadeStep = { x: 40, y: 30 }; // each extra side window opens this far down-right of the last, like macOS cascading
+// Window layout. Every window (opened from the Dock, the desktop or Finder) opens centred in the free
+// area to the left of the desktop icons, between the menu bar and the Dock, so it never covers the icons,
+// their hover cards, or the Dock, and never runs off screen.
+const desktopIconsWidth = 318; // the two desktop icon columns plus their right margin
+const iconGap = 24; // space between the windows and the icons
+const hintZone = 212; // room for an icon's hover card, kept clear when the screen is wide enough
+const workArea = { left: 24, top: 48 };
+const dockClearance = 96; // end just above the Dock, with a small gap
+const cascadeStep = { x: 32, y: 28 }; // each extra window opens this far down-right of the last, like macOS cascading
 const maxCascade = 6; // after this many, start again from the first position so windows stay on screen
 // The desktop never gets smaller than this. When the visitor zooms the browser in and the window is
 // smaller, the page scrolls instead of cutting the desktop off.
 const minDesktop = { w: 1040, h: 680 };
-// The desktop sits inset in the browser window, like a screen on a calm backdrop.
-const framePad = 14;
-const viewportWidth = () => Math.max((typeof window === "undefined" ? 1280 : window.innerWidth) - framePad * 2, minDesktop.w);
-const viewportHeight = () => Math.max((typeof window === "undefined" ? 800 : window.innerHeight) - framePad * 2, minDesktop.h);
+const viewportWidth = () => Math.max(typeof window === "undefined" ? 1280 : window.innerWidth, minDesktop.w);
+const viewportHeight = () => Math.max(typeof window === "undefined" ? 800 : window.innerHeight, minDesktop.h);
 
-// `stack` = how many side windows are already open; each one pushes the new window down and to the
-// right so the windows overlap but every title bar stays visible.
-function sideWindowFrame(stack: number): { position: { x: number; y: number }; size: WindowSize } {
-  const viewportW = viewportWidth();
-  const viewportH = viewportHeight();
-  const baseX = photoBoothFrame.x + photoBoothFrame.w + windowGap;
-  const baseY = photoBoothFrame.y;
-  const w = Math.max(600, viewportW - baseX - desktopIconsWidth);
-  const h = Math.max(320, viewportH - baseY - dockClearance);
+// Preferred window sizes; each is shrunk to fit the free area.
+const windowSizes = {
+  about: { w: 700, h: 530 },
+  spinit: { w: 420, h: 212 },
+  settings: { w: 760, h: 440 },
+  reminders: { w: 480, h: 690 },
+  document: { w: 1100, h: 780 }, // Projects, CV, Notes and the case studies
+};
+
+function freeArea() {
+  const right = viewportWidth() - desktopIconsWidth - iconGap;
+  const withHints = right - hintZone;
+  const left = workArea.left;
+  // Keep the hover-card strip clear unless that would make the area too narrow for the Intro window.
+  const r = withHints - left >= windowSizes.about.w ? withHints : right;
+  return { left, top: workArea.top, w: r - left, h: viewportHeight() - dockClearance - workArea.top };
+}
+
+// `stack` = how many windows are already open; each one opens a little further down and to the right
+// so the windows overlap but every title bar stays visible.
+function windowFrame(preferred: WindowSize, stack: number): { position: { x: number; y: number }; size: WindowSize } {
+  const area = freeArea();
   const step = stack % maxCascade;
-  // Cascaded windows shrink by the same offset, so they never slide over the desktop icons or the Dock.
   const dx = step * cascadeStep.x;
   const dy = step * cascadeStep.y;
-  return { position: { x: baseX + dx, y: baseY + dy }, size: { w: Math.max(600, w - dx), h: Math.max(320, h - dy) } };
+  const w = Math.max(360, Math.min(preferred.w, area.w - dx));
+  const h = Math.max(200, Math.min(preferred.h, area.h - dy));
+  const x = area.left + Math.max(0, Math.round((area.w - w) / 2)) + dx;
+  const y = area.top + Math.max(0, Math.round((area.h - h) / 2)) + dy;
+  return { position: { x: Math.min(x, area.left + area.w - w), y: Math.min(y, area.top + area.h - h) }, size: { w, h } };
 }
+const sideWindowFrame = (stack: number) => windowFrame(windowSizes.document, stack);
 
 function useLocalClock() {
   const [now, setNow] = useState(() => new Date());
@@ -97,7 +112,6 @@ function formatMenuTime(date: Date) {
 }
 
 // Dock thumbnail of a minimized window: a shrunken copy of the window with its app's icon in the corner.
-const finderIcon = dockSections.flat().find((app) => app.id === "finder")?.imageUrl ?? "";
 const remindersIcon = dockSections.flat().find((app) => app.id === "reminders")?.imageUrl ?? "";
 const appIconSrc: Record<BaseWindow, string> = {
   projects: finderIcon,
@@ -234,10 +248,13 @@ export function App() {
   const isDark = theme === "dark" || (theme === "auto" && systemDark);
   const wallpaper = wallpapers.find((w) => w.id === wallpaperId) ?? wallpapers[0];
   // Plain wallpapers are light in Light mode and dark in Dark mode; photos always count as dark.
-  const tone: "light" | "dark" = wallpaper.gradient && !isDark ? "light" : "dark";
+  const tone: "light" | "dark" = wallpaper.tone;
 
+  // Light and Dark also switch the wallpaper to plain white or plain black, so the two always match.
   function changeTheme(next: ThemeSetting) {
     setTheme(next);
+    const dark = next === "dark" || (next === "auto" && systemDark);
+    changeWallpaper(dark ? "black" : "white");
   }
   function changeWallpaper(id: string) {
     setWallpaperId(id);
@@ -306,19 +323,17 @@ export function App() {
   });
 
   // Read only when a window first opens: it cascades past however many side windows are already showing.
-  const sideWindows: WindowName[] = ["projects", "cv", ...caseWindows, "reminders", "notes", "settings"];
+  const sideWindows: WindowName[] = ["about", "spinit", "projects", "cv", ...caseWindows, "reminders", "notes", "settings"];
   const stackFor = (name: WindowName) => sideWindows.filter((other) => other !== name && openWindows[other] && !minimized[other]).length;
   const projectsFrame = sideWindowFrame(stackFor("projects"));
   const cvFrame = sideWindowFrame(stackFor("cv"));
   const notesFrame = sideWindowFrame(stackFor("notes"));
   // Reminders opens in the same cascade slot but at a narrower, list-like size.
-  const remindersBase = sideWindowFrame(stackFor("reminders"));
-  const remindersFrame = { position: remindersBase.position, size: { w: 440, h: Math.min(660, remindersBase.size.h) } };
+  const remindersFrame = windowFrame(windowSizes.reminders, stackFor("reminders"));
   // System Settings opens compact and low, just above the Dock, so the sky (and the night moon) stays visible.
-  const settingsBase = sideWindowFrame(stackFor("settings"));
-  const settingsH = 400;
-  const settingsY = Math.max(settingsBase.position.y, viewportHeight() - dockClearance - settingsH);
-  const settingsFrame = { position: { x: settingsBase.position.x, y: settingsY }, size: { w: Math.min(760, settingsBase.size.w), h: settingsH } };
+  const settingsFrame = windowFrame(windowSizes.settings, stackFor("settings"));
+  const spinItFrame = windowFrame(windowSizes.spinit, stackFor("spinit"));
+  const introFrame = windowFrame(windowSizes.about, stackFor("about"));
 
   // A project with a mock article opens it in the Safari-style window; others open the Projects window.
   function openProject(project: Project) {
@@ -370,7 +385,7 @@ export function App() {
 
   return (
     <main
-      className={`relative ${isMobile ? "h-[100dvh] overflow-hidden" : `h-screen overflow-auto p-[14px] ${isDark ? "bg-[#0b0b0c]" : "bg-[#dedbd5]"}`} w-full text-[13px] leading-4 ${isDark ? "theme-dark" : ""} ${a11y.reduceMotion ? "a11y-reduce-motion" : ""} ${
+      className={`relative ${isMobile ? "h-[100dvh] overflow-hidden" : `h-screen overflow-auto ${tone === "light" ? "bg-white" : "bg-black"}`} w-full text-[13px] leading-4 ${isDark ? "theme-dark" : ""} ${a11y.reduceMotion ? "a11y-reduce-motion" : ""} ${
         a11y.increaseContrast ? "a11y-contrast" : ""
       } ${a11y.largerText ? "a11y-large-text" : ""}`}
     >
@@ -381,7 +396,7 @@ export function App() {
         </>
       ) : (
       <div
-        className={`relative h-full min-h-[680px] min-w-[1040px] overflow-hidden rounded-[18px] shadow-[0_24px_60px_rgba(0,0,0,0.16),0_0_0_1px_rgba(0,0,0,0.08)] ${tone === "light" ? "desk-light" : ""}`}
+        className={`relative h-full min-h-[680px] min-w-[1040px] overflow-hidden ${tone === "light" ? "desk-light" : ""}`}
         onClick={() => setSelectedIcon(null)}
       >
         {/* Wallpaper. In dark mode it fades from day to night over ~1.6 s: the photo dims and cools,
@@ -616,7 +631,16 @@ export function App() {
             minSize={{ w: 380, h: 360 }}
             {...windowProps("reminders")}
           >
-            {({ dragHandleProps, lights }) => <Reminders dragHandleProps={dragHandleProps} lights={lights} />}
+            {({ dragHandleProps, lights }) => <Reminders
+                dragHandleProps={dragHandleProps}
+                lights={lights}
+                onNavigate={(step) => {
+                  if (step === "intro" || step === "about") openWindow("about");
+                  else if (step === "projects") openWindow("projects");
+                  else if (step === "cv") openWindow("cv");
+                  else if (step.startsWith("case:")) openWindow(step as CaseWindow);
+                }}
+              />}
           </MacWindow>
         )}
 
@@ -651,7 +675,10 @@ export function App() {
                 theme={theme}
                 onThemeChange={changeTheme}
                 wallpaperId={wallpaper.id}
-                onWallpaperChange={changeWallpaper}
+                onWallpaperChange={(id) => {
+                  changeWallpaper(id);
+                  setTheme(id === "black" ? "dark" : "light");
+                }}
                 a11y={a11y}
                 onA11yChange={changeA11y}
               />
@@ -662,8 +689,8 @@ export function App() {
         {openWindows.spinit && (
           <MacWindow
             title="Spin it"
-            initialPosition={{ x: spinItFrame.x, y: spinItFrame.y }}
-            initialSize={{ w: spinItFrame.w, h: spinItFrame.h }}
+            initialPosition={spinItFrame.position}
+            initialSize={spinItFrame.size}
             widthClassName=""
             {...windowProps("spinit")}
           >
@@ -674,8 +701,8 @@ export function App() {
         {openWindows.about && (
           <MacWindow
             title="Intro"
-            initialPosition={{ x: photoBoothFrame.x, y: photoBoothFrame.y }}
-            initialSize={{ w: photoBoothFrame.w, h: photoBoothFrame.h }}
+            initialPosition={introFrame.position}
+            initialSize={introFrame.size}
             widthClassName=""
             resizable
             minSize={{ w: 420, h: 320 }}
