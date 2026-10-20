@@ -48,7 +48,8 @@ const appNameOf = (name: WindowName) => (isCase(name) ? "Safari" : appNames[name
 
 // Window layout. Windows open centred on the screen (between the menu bar and the Dock), but never further
 // right than the free area to the left of the desktop icons, so they don't cover the icons or the hover cards
-// that open to the icons' left. Spin it is the exception: it sits in the bottom-right corner, under the icons.
+// that open to the icons' left. Exceptions: Spin it sits in the bottom-right corner, under the icons, and
+// Reminders opens along the left edge.
 const desktopIconsWidth = 318; // the two desktop icon columns plus their right margin
 const iconGap = 24; // space between the windows and the icons
 const hintZone = 212; // room for an icon's hover card, kept clear when the screen is wide enough
@@ -101,6 +102,13 @@ const desktopIconsBottom = 44 + 612;
 function spinItCorner(): { position: { x: number; y: number }; size: WindowSize } {
   const { w, h } = windowSizes.spinit;
   return { position: { x: viewportWidth() - 32 - w, y: Math.max(desktopIconsBottom + 16, viewportHeight() - 48 - h) }, size: { w, h } };
+}
+// Reminders (Scheduled) opens docked to the left edge, beside the centred Intro window, like a sidebar list.
+function remindersLeft(): { position: { x: number; y: number }; size: WindowSize } {
+  const { w } = windowSizes.reminders;
+  const top = 92;
+  const h = Math.min(windowSizes.reminders.h, viewportHeight() - top - 24);
+  return { position: { x: 40, y: top }, size: { w, h } };
 }
 const sideWindowFrame = (stack: number) => windowFrame(windowSizes.document, stack);
 
@@ -332,13 +340,13 @@ export function App() {
   });
 
   // Read only when a window first opens: it cascades past however many side windows are already showing.
-  const sideWindows: WindowName[] = ["about", "projects", "cv", ...caseWindows, "reminders", "notes", "settings"];
+  const sideWindows: WindowName[] = ["about", "projects", "cv", ...caseWindows, "notes", "settings"];
   const stackFor = (name: WindowName) => sideWindows.filter((other) => other !== name && openWindows[other] && !minimized[other]).length;
   const projectsFrame = sideWindowFrame(stackFor("projects"));
   const cvFrame = sideWindowFrame(stackFor("cv"));
   const notesFrame = sideWindowFrame(stackFor("notes"));
   // The other windows open at their own sizes in the same free area.
-  const remindersFrame = windowFrame(windowSizes.reminders, stackFor("reminders"));
+  const remindersFrame = remindersLeft();
   const settingsFrame = windowFrame(windowSizes.settings, stackFor("settings"));
   const spinItFrame = spinItCorner();
   const introFrame = windowFrame(windowSizes.about, stackFor("about"));
