@@ -73,11 +73,14 @@ export function TrafficLights({
           <MinusIcon className={`${glyph} text-[#8a5a00]`} strokeWidth={3.2} />
         </span>
       </button>
-      <button type="button" aria-label={zoomed ? `Exit full screen` : `Enter full screen`} onClick={onZoom} className={hit}>
-        <span className={`${base} ${isActive ? "bg-[#28c840] shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.18)]" : `${off} group-hover:bg-[#28c840]`}`}>
-          <ZoomGlyph className={`${glyph} text-[#0a5c14]`} strokeWidth={3} />
-        </span>
-      </button>
+      {/* Fixed-size windows (no onZoom, e.g. Spin it) have no green full-screen button. */}
+      {onZoom && (
+        <button type="button" aria-label={zoomed ? `Exit full screen` : `Enter full screen`} onClick={onZoom} className={hit}>
+          <span className={`${base} ${isActive ? "bg-[#28c840] shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.18)]" : `${off} group-hover:bg-[#28c840]`}`}>
+            <ZoomGlyph className={`${glyph} text-[#0a5c14]`} strokeWidth={3} />
+          </span>
+        </button>
+      )}
     </div>
   );
 }
@@ -214,8 +217,10 @@ export function MacWindow({
       dragOrigin.current = null;
       setDragging(false);
     },
-    // Double-clicking the title bar zooms, as on macOS.
-    onDoubleClick: toggleZoom,
+    // Double-clicking the title bar zooms, as on macOS (fixed-size windows don't zoom).
+    onDoubleClick: () => {
+      if (resizable) toggleZoom();
+    },
   };
 
   function startResize(edge: ResizeEdge, event: PointerEvent<HTMLElement>) {
@@ -264,7 +269,7 @@ export function MacWindow({
   }
 
   const lights = (
-    <TrafficLights isActive={isActive} dark={isDark} title={title} zoomed={zoomed} onClose={onClose} onMinimize={minimize} onZoom={toggleZoom} />
+    <TrafficLights isActive={isActive} dark={isDark} title={title} zoomed={zoomed} onClose={onClose} onMinimize={minimize} onZoom={resizable ? toggleZoom : undefined} />
   );
 
   const frameStyle: React.CSSProperties = zoomed

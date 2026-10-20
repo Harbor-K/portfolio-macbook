@@ -1,4 +1,4 @@
-import React, { type ReactNode, useState } from "react";
+import React, { type ReactNode, useEffect, useRef, useState } from "react";
 import {
   ApertureIcon,
   BookOpenIcon,
@@ -41,11 +41,50 @@ type DockProps = {
 
 // Matches Harbor's real Dock: three groups split by thin dividers, red badges, running dots,
 // a light Liquid Glass shelf, and no magnification (the macOS default).
+// Like macOS "Automatically hide and show the Dock": it stays tucked below the screen and slides up when
+// the pointer reaches the bottom edge (or it gets keyboard focus), then slides away again shortly after
+// the pointer leaves. It also pops up briefly when a window is minimized into it.
 export function Dock({ sections, isRunning, onOpen, minimized = [] }: DockProps) {
   const [hovered, setHovered] = useState<string | null>(null);
+  const [shown, setShown] = useState(false);
+  const hideTimer = useRef<number | undefined>(undefined);
+
+  function show() {
+    window.clearTimeout(hideTimer.current);
+    setShown(true);
+  }
+  function hideSoon(delay = 400) {
+    window.clearTimeout(hideTimer.current);
+    hideTimer.current = window.setTimeout(() => setShown(false), delay);
+  }
+  useEffect(() => () => window.clearTimeout(hideTimer.current), []);
+
+  // Show the Dock while a window minimizes into it (or is restored from it), then tuck it away again.
+  const minimizedCount = minimized.length;
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    show();
+    hideSoon(1600);
+  }, [minimizedCount]);
 
   return (
-    <nav aria-label="Dock" className="absolute bottom-[6px] left-1/2 z-[90] -translate-x-1/2">
+    <>
+    {/* Invisible strip along the bottom edge: reaching it brings the Dock up. */}
+    <div aria-hidden="true" className="absolute inset-x-0 bottom-0 z-[89] h-[10px]" onMouseEnter={show} onPointerDown={show} />
+    <nav
+      aria-label="Dock"
+      onMouseEnter={show}
+      onMouseLeave={() => hideSoon()}
+      onFocus={show}
+      onBlur={() => hideSoon()}
+      className={`absolute bottom-[6px] left-1/2 z-[90] -translate-x-1/2 transition-[transform,opacity] duration-300 ease-[cubic-bezier(.2,.8,.2,1)] ${
+        shown ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-[calc(100%+12px)] opacity-0"
+      }`}
+    >
       <div className="flex items-center gap-[12px] rounded-[22px] border border-white/40 bg-white/25 p-[9px] shadow-[0_10px_30px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.55)] backdrop-blur-[30px] backdrop-saturate-[1.6] transition-[width] duration-300">
         {sections.map((section, sectionIndex) => (
           <React.Fragment key={sectionIndex}>
@@ -76,6 +115,7 @@ export function Dock({ sections, isRunning, onOpen, minimized = [] }: DockProps)
         ))}
       </div>
     </nav>
+    </>
   );
 }
 

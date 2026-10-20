@@ -1,4 +1,4 @@
-// Desktop wallpapers: plain white or plain black only, so the windows and project cards are what stand out.
+// Desktop wallpapers: plain white or plain dark grey only, so the windows and project cards are what stand out.
 // Switching Appearance to Light or Dark also switches to the matching wallpaper.
 export type Wallpaper = {
   id: string;
@@ -18,7 +18,9 @@ export const nightFilter = "none";
 
 export const wallpapers: Wallpaper[] = [
   { id: "white", name: "White", src: "", tone: "light", gradient: { light: "#FFFFFF", dark: "#FFFFFF" }, objectPosition: "50% 50%", filter: "none" },
-  { id: "black", name: "Black", src: "", tone: "dark", gradient: { light: "#000000", dark: "#000000" }, objectPosition: "50% 50%", filter: "none" },
+  // Not pure black: #121212 is the dark surface Material Design recommends, softer on the eyes and lets the
+  // (slightly lighter) dark windows still stand out.
+  { id: "black", name: "Dark", src: "", tone: "dark", gradient: { light: "#121212", dark: "#121212" }, objectPosition: "50% 50%", filter: "none" },
 ];
 
 export const defaultWallpaperId = "white";
