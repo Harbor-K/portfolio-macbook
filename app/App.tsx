@@ -20,7 +20,7 @@ import { MobileSafari } from "./components/MobileSafari";
 import { aboutIcon, aboutPortrait } from "./data/aboutVideo";
 import { type DockApp, dockSections, finderIcon, settingsIcon, spinItIcon } from "./data/dock";
 import { projects, type Project } from "./data/portfolio";
-import { archiveBookIcon, cvPdfIcon, notesIcon, projectFolderIcon } from "./data/projectFolderIcon";
+import { cvPdfIcon, notesIcon, projectFolderIcon } from "./data/projectFolderIcon";
 import { tagColorFor } from "./data/tags";
 import { defaultWallpaperId, nightFilter, wallpapers } from "./data/wallpaper";
 import { useScreenInit } from "./useScreenInit.js";
@@ -46,13 +46,25 @@ const appNames: Record<BaseWindow, string> = { projects: "Projects", about: "Int
 const appNameOf = (name: WindowName) => (isCase(name) ? "Safari" : appNames[name]);
 
 
-// Window layout. Windows open centred on the screen (between the menu bar and the Dock), but never further
-// right than the free area to the left of the desktop icons, so they don't cover the icons or the hover cards
-// that open to the icons' left. Exceptions: Spin it sits in the bottom-right corner, under the icons, and
-// Reminders opens along the left edge.
-const desktopIconsWidth = 318; // the two desktop icon columns plus their right margin
+// Window layout. The desktop icons are scattered down both sides of the screen (projects on the left,
+// About / Projects / CV / Notes on the right), and windows open centred on the screen in the space between
+// them, so they don't cover the icons or the hover cards that open toward the middle.
+// Exceptions: Spin it sits in the bottom-right corner, under the right-hand icons, and Reminders opens along
+// the left edge.
+const leftIconsWidth = 64 + 150; // furthest-in left icon: 64px from the edge, 150px wide
+const rightIconsWidth = 60 + 120; // furthest-in right icon: 60px from the edge, 120px wide
 const iconGap = 24; // space between the windows and the icons
 const hintZone = 212; // room for an icon's hover card, kept clear when the screen is wide enough
+// Where each icon sits: `top` as a share of the desktop height, `x` = distance from its side of the screen.
+// The x offsets zig-zag so the icons look casually placed, like files dropped on a desktop.
+const leftSlots = [
+  { top: "8%", x: 48 },
+  { top: "30%", x: 20 },
+  { top: "52%", x: 64 },
+  { top: "74%", x: 28 },
+];
+const rightTops = [0.06, 0.24, 0.42, 0.6];
+const rightSlots = rightTops.map((top, i) => ({ top: `${top * 100}%`, x: [40, 60, 24, 52][i] }));
 const workArea = { left: 24, top: 48 };
 const dockClearance = 96; // end just above the Dock, with a small gap
 const cascadeStep = { x: 32, y: 28 }; // each extra window opens this far down-right of the last, like macOS cascading
@@ -73,12 +85,13 @@ const windowSizes = {
 };
 
 function freeArea() {
-  const right = viewportWidth() - desktopIconsWidth - iconGap;
-  const withHints = right - hintZone;
-  const left = workArea.left;
-  // Keep the hover-card strip clear unless that would make the area too narrow for the Intro window.
-  const r = withHints - left >= windowSizes.about.w ? withHints : right;
-  return { left, top: workArea.top, w: r - left, h: viewportHeight() - dockClearance - workArea.top };
+  const left = Math.max(workArea.left, leftIconsWidth + iconGap);
+  const right = viewportWidth() - rightIconsWidth - iconGap;
+  // Keep the hover-card strips clear on both sides unless that would make the area too narrow for the Intro window.
+  const roomy = right - left - 2 * hintZone >= windowSizes.about.w;
+  const l = roomy ? left + hintZone : left;
+  const r = roomy ? right - hintZone : right;
+  return { left: l, top: workArea.top, w: r - l, h: viewportHeight() - dockClearance - workArea.top };
 }
 
 // `stack` = how many windows are already open; each one opens a little further down and to the right
@@ -97,11 +110,12 @@ function windowFrame(preferred: WindowSize, stack: number): { position: { x: num
     size: { w, h },
   };
 }
-// Bottom of the desktop icon columns (they start 44px down and are about 612px tall).
-const desktopIconsBottom = 44 + 612;
+// Spin it sits in the bottom-right corner, just below the last right-hand icon (about 125px tall).
 function spinItCorner(): { position: { x: number; y: number }; size: WindowSize } {
   const { w, h } = windowSizes.spinit;
-  return { position: { x: viewportWidth() - 32 - w, y: Math.max(desktopIconsBottom + 16, viewportHeight() - 48 - h) }, size: { w, h } };
+  const H = viewportHeight();
+  const belowIcons = Math.round(rightTops[rightTops.length - 1] * H) + 125 + 16;
+  return { position: { x: viewportWidth() - 32 - w, y: Math.min(H - h - 8, Math.max(belowIcons, H - 48 - h)) }, size: { w, h } };
 }
 // Reminders (Scheduled) opens docked to the left edge, beside the centred Intro window, like a sidebar list.
 function remindersLeft(): { position: { x: number; y: number }; size: WindowSize } {
@@ -389,7 +403,6 @@ export function App() {
       { id: "about", title: "About", image: aboutIcon, look: "icon", kind: "Intro", hint: "Intro video & profile", onOpen: () => openWindow("about") },
       { id: "folder", title: "Projects", image: projectFolderIcon, look: "icon", kind: "Folder", hint: "All four case studies", onOpen: () => openWindow("projects") },
       cvItem,
-      { id: "book", title: "Book", image: archiveBookIcon, look: "icon", kind: "Book", hint: "Coming soon" },
       { id: "notes", title: "Notes", image: notesIcon, look: "icon", kind: "Application", hint: "How I work, what I value, and a fun fact", onOpen: () => openWindow("notes") },
     ],
     documents: [
@@ -521,23 +534,26 @@ export function App() {
           </div>
         </header>
 
-        {/* Two columns: projects on the left, system items on the right */}
-        <section aria-label="Desktop" className="absolute right-[28px] top-[44px] z-10 flex items-start gap-x-[20px]">
-          <div className="flex flex-col gap-y-[14px]">
-            {projects.map((project, index) => (
-              <ProjectIcon
-                key={project.title}
-                project={project}
-                tagColor={tagColorFor(index)}
-                tone={tone}
-                hint={projectHint(project.title)}
-                selected={selectedIcon === project.title}
-                onSelect={() => setSelectedIcon(project.title)}
-                onOpen={() => openProject(project)}
-              />
-            ))}
-          </div>
-          <div className="flex flex-col gap-y-[10px]">
+        {/* Desktop icons scattered down both sides: the four projects on the left, About / Projects / CV / Notes
+            on the right. Hover cards open toward the middle of the screen. */}
+        <section aria-label="Desktop" className="absolute inset-0 top-[24px] z-10">
+          {projects.map((project, index) => {
+            const slot = leftSlots[index % leftSlots.length];
+            return (
+              <div key={project.title} className="absolute" style={{ top: slot.top, left: slot.x }}>
+                <ProjectIcon
+                  project={project}
+                  tagColor={tagColorFor(index)}
+                  tone={tone}
+                  hint={projectHint(project.title)}
+                  selected={selectedIcon === project.title}
+                  onSelect={() => setSelectedIcon(project.title)}
+                  onOpen={() => openProject(project)}
+                />
+              </div>
+            );
+          })}
+          <div className="absolute" style={{ top: rightSlots[0].top, right: rightSlots[0].x }}>
             <DesktopIcon
               label="About"
               kind="image"
@@ -549,7 +565,9 @@ export function App() {
               onSelect={() => setSelectedIcon("About")}
               onOpen={() => openWindow("about")}
             />
-            {/* Opens the same Projects (Finder) window as the Index icon. */}
+          </div>
+          {/* Opens the same Projects (Finder) window as the Index icon. */}
+          <div className="absolute" style={{ top: rightSlots[1].top, right: rightSlots[1].x }}>
             <DesktopIcon
               label="Projects"
               kind="image"
@@ -560,21 +578,30 @@ export function App() {
               onSelect={() => setSelectedIcon("Projects")}
               onOpen={() => openWindow("projects")}
             />
+          </div>
+          <div className="absolute" style={{ top: rightSlots[2].top, right: rightSlots[2].x }}>
             <DesktopIcon
               label="CV.pdf"
               kind="image"
               imageSrc={cvPdfIcon}
               tone={tone}
               hint={{ eyebrow: "Preview", title: "CV", body: "Experience, projects and skills on one page. Download as PDF.", action: "Double-click to open" }}
-              selected={selectedIcon === "CV"} onSelect={() => setSelectedIcon("CV")} onOpen={() => openWindow("cv")} />
-            <DesktopIcon label="Book" kind="image" imageSrc={archiveBookIcon} tone={tone} hint={{ title: "Book", body: "Coming soon." }} selected={selectedIcon === "Book"} onSelect={() => setSelectedIcon("Book")} />
+              selected={selectedIcon === "CV"}
+              onSelect={() => setSelectedIcon("CV")}
+              onOpen={() => openWindow("cv")}
+            />
+          </div>
+          <div className="absolute" style={{ top: rightSlots[3].top, right: rightSlots[3].x }}>
             <DesktopIcon
               label="Notes"
               kind="image"
               imageSrc={notesIcon}
               tone={tone}
               hint={{ eyebrow: "Notes", title: "How I work", body: "My design approach, what I value in a team, and a fun fact.", action: "Double-click to open" }}
-              selected={selectedIcon === "Notes"} onSelect={() => setSelectedIcon("Notes")} onOpen={() => openWindow("notes")} />
+              selected={selectedIcon === "Notes"}
+              onSelect={() => setSelectedIcon("Notes")}
+              onOpen={() => openWindow("notes")}
+            />
           </div>
         </section>
 
@@ -813,7 +840,7 @@ function ProjectIcon({
         <span className="h-[9px] w-[9px] shrink-0 rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.4)]" style={{ background: tagColor }} aria-hidden="true" />
         <span className="truncate">{title}</span>
       </span>
-      {hint && <HintCard hint={hint} />}
+      {hint && <HintCard hint={hint} side="right" />}
     </button>
   );
 }
