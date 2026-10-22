@@ -1,55 +1,25 @@
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 import type { DragHandleProps } from "./MacWindow";
 import { labelImage, tracks } from "../data/spinIt";
+import { clock, player, usePlayer } from "./player";
 
 // Caramel leather deck sampled from the Dock's turntable icon (kept from the first version).
 const deck = "linear-gradient(160deg, #d4a376 0%, #b48356 45%, #a7764a 100%)";
 const ink = "#fffaf3"; // warm white text and controls
 const textShadow = "0 1px 2px rgba(70,35,10,0.45)";
 
-const clock = (seconds: number) => {
-  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
-  const s = Math.floor(seconds);
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-};
-
 // A record player: a vinyl with a photo label and a tonearm on the left; the song title,
-// a progress bar and previous / play-pause / next on the right.
+// a progress bar and previous / play-pause / next on the right. It drives the shared player, so the
+// Control Center's Now Playing tile stays in step with it.
 export function SpinIt({ dragHandleProps, lights }: { dragHandleProps: DragHandleProps; lights: React.ReactNode }) {
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [index, setIndex] = useState(0);
-  const [playing, setPlaying] = useState(false);
-  const [current, setCurrent] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const { index, playing, current, duration } = usePlayer();
   const track = tracks[index];
   const hasAudio = Boolean(track?.src);
 
-  // Keep the <audio> element in step with the play button.
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || !hasAudio) return;
-    if (playing) void audio.play().catch(() => setPlaying(false));
-    else audio.pause();
-  }, [playing, hasAudio, index]);
-
-  function step(delta: number) {
-    if (tracks.length === 0) return;
-    const audio = audioRef.current;
-    // Like a music app: "previous" restarts the song if it is a few seconds in.
-    if (delta < 0 && audio && audio.currentTime > 3) {
-      audio.currentTime = 0;
-      return;
-    }
-    setIndex((i) => (i + delta + tracks.length) % tracks.length);
-    setCurrent(0);
-    setDuration(0);
-  }
-
   function seek(event: React.PointerEvent<HTMLDivElement>) {
-    const audio = audioRef.current;
-    if (!audio || !duration) return;
+    if (!duration) return;
     const rect = event.currentTarget.getBoundingClientRect();
-    audio.currentTime = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width)) * duration;
+    player.seek(Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width)) * duration);
   }
 
   const progress = duration ? Math.min(1, current / duration) : 0;
@@ -68,17 +38,6 @@ export function SpinIt({ dragHandleProps, lights }: { dragHandleProps: DragHandl
         style={{ backgroundImage: "radial-gradient(rgba(90,50,20,0.55) 0.6px, transparent 0.8px)", backgroundSize: "3px 3px" }}
       />
       <div className="absolute left-[14px] top-[11px] z-10">{lights}</div>
-
-      {hasAudio && (
-        <audio
-          ref={audioRef}
-          src={track.src}
-          preload="metadata"
-          onTimeUpdate={(e) => setCurrent(e.currentTarget.currentTime)}
-          onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-          onEnded={() => (tracks.length > 1 ? step(1) : setPlaying(false))}
-        />
-      )}
 
       {/* Vinyl with a photo label */}
       <div className="relative h-[146px] w-[146px] shrink-0">
@@ -132,10 +91,8 @@ export function SpinIt({ dragHandleProps, lights }: { dragHandleProps: DragHandl
           tabIndex={hasAudio ? 0 : -1}
           onPointerDown={seek}
           onKeyDown={(e) => {
-            const audio = audioRef.current;
-            if (!audio || !duration) return;
-            if (e.key === "ArrowRight") audio.currentTime = Math.min(duration, audio.currentTime + 5);
-            if (e.key === "ArrowLeft") audio.currentTime = Math.max(0, audio.currentTime - 5);
+            if (e.key === "ArrowRight") player.seek(current + 5);
+            if (e.key === "ArrowLeft") player.seek(current - 5);
           }}
           className="mt-2.5 h-[14px] cursor-pointer py-[5px]"
         >
@@ -149,13 +106,13 @@ export function SpinIt({ dragHandleProps, lights }: { dragHandleProps: DragHandl
         </div>
 
         <div className="mt-1.5 flex items-center justify-between px-1">
-          <ControlButton label="Previous" onClick={() => step(-1)}>
+          <ControlButton label="Previous" onClick={() => player.step(-1)}>
             <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="currentColor" aria-hidden="true">
               <rect x="4" y="5" width="3" height="14" rx="1.2" />
               <path d="M19.5 5.8v12.4a1 1 0 0 1-1.5.86L8.6 13.3a1.5 1.5 0 0 1 0-2.6L18 4.94a1 1 0 0 1 1.5.86Z" />
             </svg>
           </ControlButton>
-          <ControlButton label={playing ? "Pause" : "Play"} onClick={() => setPlaying((v) => !v)} big>
+          <ControlButton label={playing ? "Pause" : "Play"} onClick={() => player.toggle()} big>
             {playing ? (
               <svg viewBox="0 0 24 24" className="h-[28px] w-[28px]" fill="currentColor" aria-hidden="true">
                 <rect x="5" y="3.5" width="4.6" height="17" rx="2" />
@@ -167,7 +124,7 @@ export function SpinIt({ dragHandleProps, lights }: { dragHandleProps: DragHandl
               </svg>
             )}
           </ControlButton>
-          <ControlButton label="Next" onClick={() => step(1)}>
+          <ControlButton label="Next" onClick={() => player.step(1)}>
             <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="currentColor" aria-hidden="true">
               <rect x="17" y="5" width="3" height="14" rx="1.2" />
               <path d="M4.5 5.8v12.4a1 1 0 0 0 1.5.86l9.4-5.76a1.5 1.5 0 0 0 0-2.6L6 4.94a1 1 0 0 0-1.5.86Z" />

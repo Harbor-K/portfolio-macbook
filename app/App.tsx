@@ -11,22 +11,22 @@ import { KimLLM } from "./components/KimLLM";
 import { Reminders } from "./components/Reminders";
 import { Notes } from "./components/Notes";
 import { notes } from "./data/notes";
-import { Settings, type SettingsPane, type ThemeSetting } from "./components/Settings";
+import type { ThemeSetting } from "./components/Settings";
 import type { A11ySettings } from "./components/AccessibilityPane";
 import { SpinIt } from "./components/SpinIt";
 import { WindowPreview } from "./components/WindowPreview";
-import { AccessibilityIcon, CompassIcon, ContrastIcon, ListChecksIcon, MusicIcon, type LucideIcon } from "lucide-react";
+import { CompassIcon, ListChecksIcon } from "lucide-react";
 import { MobileSafari } from "./components/MobileSafari";
-import { MenuBarMenu, type MenuBarMenuKind } from "./components/MenuBarMenu";
+import { ControlCenter } from "./components/ControlCenter";
 import { aboutIcon, aboutPortrait } from "./data/aboutVideo";
-import { dockSections, finderIcon, settingsIcon, spinItIcon } from "./data/dock";
+import { dockSections, finderIcon, spinItIcon } from "./data/dock";
 import { projects, type Project } from "./data/portfolio";
 import { cvPdfIcon, notesIcon, projectFolderIcon } from "./data/projectFolderIcon";
 import { tagColorFor } from "./data/tags";
 import { defaultWallpaperId, nightFilter, wallpapers } from "./data/wallpaper";
 import { useScreenInit } from "./useScreenInit.js";
 
-type BaseWindow = "projects" | "about" | "cv" | "reminders" | "notes" | "settings" | "spinit";
+type BaseWindow = "projects" | "about" | "cv" | "reminders" | "notes" | "spinit";
 // Each project's case study gets its own Safari-style window, named "case:<project title>".
 type CaseWindow = `case:${string}`;
 type WindowName = BaseWindow | CaseWindow;
@@ -42,8 +42,8 @@ type ScreenInit = {
   photoBoothInfo?: boolean;
 };
 
-const windowTitles: Record<BaseWindow, string> = { projects: "Projects", about: "Intro", cv: "CV.pdf", reminders: "Reminders", notes: "Notes", settings: "System Settings", spinit: "Spin it" };
-const appNames: Record<BaseWindow, string> = { projects: "Projects", about: "Intro", cv: "Preview", reminders: "Reminders", notes: "Notes", settings: "System Settings", spinit: "Spin it" };
+const windowTitles: Record<BaseWindow, string> = { projects: "Projects", about: "Intro", cv: "CV.pdf", reminders: "Reminders", notes: "Notes", spinit: "Spin it" };
+const appNames: Record<BaseWindow, string> = { projects: "Projects", about: "Intro", cv: "Preview", reminders: "Reminders", notes: "Notes", spinit: "Spin it" };
 const appNameOf = (name: WindowName) => (isCase(name) ? "Safari" : appNames[name]);
 
 
@@ -80,7 +80,6 @@ const viewportHeight = () => Math.max(typeof window === "undefined" ? 800 : wind
 const windowSizes = {
   about: { w: 700, h: 530 },
   spinit: { w: 420, h: 212 },
-  settings: { w: 760, h: 440 },
   reminders: { w: 480, h: 690 },
   document: { w: 1100, h: 780 }, // Projects, CV, Notes and the case studies
 };
@@ -151,7 +150,6 @@ const appIconSrc: Record<BaseWindow, string> = {
   cv: cvPdfIcon,
   reminders: remindersIcon,
   notes: notesIcon,
-  settings: settingsIcon,
   spinit: spinItIcon,
 };
 // No Safari icon is hosted, so case-study windows get a simple compass tile.
@@ -223,7 +221,6 @@ export function App() {
     cv: screenInit.openWindows?.cv ?? false,
     reminders: screenInit.openWindows?.reminders ?? false,
     notes: screenInit.openWindows?.notes ?? false,
-    settings: screenInit.openWindows?.settings ?? false,
     spinit: screenInit.openWindows?.spinit ?? false, // hidden at first; opens from the Dock
     ...Object.fromEntries(caseWindows.map((name) => [name, screenInit.openWindows?.[name] ?? false])),
     // Older canvas screens used "article" for the Trust Bank page.
@@ -238,7 +235,6 @@ export function App() {
     ...Object.fromEntries(caseWindows.map((name, i) => [name, 26 + i * 0.1])),
     reminders: 27,
     notes: 28,
-    settings: 29,
     about: 30,
   });
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
@@ -258,7 +254,7 @@ export function App() {
     const saved = readSetting("harbor.wallpaper.v2");
     return wallpapers.some((w) => w.id === saved) ? (saved as string) : defaultWallpaperId;
   });
-  // Accessibility toggles (System Settings > Accessibility). Remembered in this browser; Reduce motion
+  // Accessibility toggles (Control Center in the menu bar). Remembered in this browser; Reduce motion
   // starts on when the visitor's device already asks for reduced motion.
   const [a11y, setA11y] = useState<A11ySettings>(() => {
     const fallback: A11ySettings = {
@@ -335,27 +331,30 @@ export function App() {
     focusWindow(windowName);
   }
 
-  // Menu bar extras (between Kim LLM and the clock) replace the Dock's app icons. Accessibility and Appearance
-  // open a macOS-style drop-down menu (quick toggles, plus a row into System Settings); the music note opens
-  // Spin it; the checklist opens Reminders.
-  const [settingsPane, setSettingsPane] = useState<SettingsPane>("appearance");
-  const [settingsOpenCount, setSettingsOpenCount] = useState(0);
-  function openSettings(pane: SettingsPane) {
-    setSettingsPane(pane);
-    setSettingsOpenCount((n) => n + 1); // re-open on the requested pane even if Settings is already open
-    openWindow("settings");
-  }
-  const [openMenu, setOpenMenu] = useState<MenuBarMenuKind | null>(null);
+  // Menu bar extras (between Kim LLM and the clock) replace the Dock's app icons: the checklist opens
+  // Reminders, and the two-switch icon opens Control Center (accessibility, Dark Mode and Spin it's music).
+  const [controlOpen, setControlOpen] = useState(false);
+  const [controlRight, setControlRight] = useState(8);
   const extrasRef = useRef<HTMLDivElement>(null);
-  const toggleMenu = (kind: MenuBarMenuKind) => setOpenMenu((current) => (current === kind ? null : kind));
-  // Close the open menu on a click anywhere else, or with Esc, like macOS.
+  const controlRef = useRef<HTMLDivElement>(null);
+  const desktopRef = useRef<HTMLDivElement>(null);
+  // Control Center is drawn outside the menu bar (so its frosted-glass blur sees the desktop behind it),
+  // lined up under the right edge of its icon.
+  function toggleControl(button: HTMLElement) {
+    const host = desktopRef.current?.getBoundingClientRect();
+    const icon = button.getBoundingClientRect();
+    if (host) setControlRight(Math.max(8, Math.round(host.right - icon.right - 8)));
+    setControlOpen((v) => !v);
+  }
+  // Close Control Center on a click anywhere else, or with Esc, like macOS.
   useEffect(() => {
-    if (!openMenu) return;
+    if (!controlOpen) return;
     const onDown = (event: PointerEvent) => {
-      if (!extrasRef.current?.contains(event.target as Node)) setOpenMenu(null);
+      const target = event.target as Node;
+      if (!extrasRef.current?.contains(target) && !controlRef.current?.contains(target)) setControlOpen(false);
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpenMenu(null);
+      if (event.key === "Escape") setControlOpen(false);
     };
     window.addEventListener("pointerdown", onDown);
     window.addEventListener("keydown", onKey);
@@ -363,13 +362,7 @@ export function App() {
       window.removeEventListener("pointerdown", onDown);
       window.removeEventListener("keydown", onKey);
     };
-  }, [openMenu]);
-  const menuExtras: { id: string; label: string; icon: LucideIcon; active: boolean; onClick: () => void }[] = [
-    { id: "accessibility", label: "Accessibility", icon: AccessibilityIcon, active: openMenu === "accessibility", onClick: () => toggleMenu("accessibility") },
-    { id: "appearance", label: "Appearance", icon: ContrastIcon, active: openMenu === "appearance", onClick: () => toggleMenu("appearance") },
-    { id: "spinit", label: "Spin it", icon: MusicIcon, active: !openMenu && activeWindow === "spinit", onClick: () => { setOpenMenu(null); openWindow("spinit"); } },
-    { id: "reminders", label: "Reminders", icon: ListChecksIcon, active: !openMenu && activeWindow === "reminders", onClick: () => { setOpenMenu(null); openWindow("reminders"); } },
-  ];
+  }, [controlOpen]);
 
   const minimizedInDock: MinimizedWindow[] = minimizeOrder
     .filter((name) => openWindows[name])
@@ -387,14 +380,13 @@ export function App() {
   });
 
   // Read only when a window first opens: it cascades past however many side windows are already showing.
-  const sideWindows: WindowName[] = ["about", "projects", "cv", ...caseWindows, "notes", "settings"];
+  const sideWindows: WindowName[] = ["about", "projects", "cv", ...caseWindows, "notes"];
   const stackFor = (name: WindowName) => sideWindows.filter((other) => other !== name && openWindows[other] && !minimized[other]).length;
   const projectsFrame = sideWindowFrame(stackFor("projects"));
   const cvFrame = sideWindowFrame(stackFor("cv"));
   const notesFrame = sideWindowFrame(stackFor("notes"));
   // The other windows open at their own sizes in the same free area.
   const remindersFrame = remindersLeft();
-  const settingsFrame = windowFrame(windowSizes.settings, stackFor("settings"));
   const spinItFrame = spinItCorner();
   const introFrame = windowFrame(windowSizes.about, stackFor("about"));
 
@@ -458,6 +450,7 @@ export function App() {
         </>
       ) : (
       <div
+        ref={desktopRef}
         className={`relative h-full min-h-[680px] min-w-[1040px] overflow-hidden ${tone === "light" ? "desk-light" : ""}`}
         onClick={() => setSelectedIcon(null)}
       >
@@ -563,50 +556,41 @@ export function App() {
             </button>
             {/* Menu bar extras, like the status icons on a Mac: a grey label appears under an icon on hover. */}
             <div ref={extrasRef} className="-mx-[4px] flex items-center gap-[2px]">
-              {menuExtras.map(({ id, label, icon: Icon, active, onClick }) => (
-                <div key={id} className="relative">
-                <button
-                  type="button"
-                  aria-label={label}
-                  aria-haspopup={id === "accessibility" || id === "appearance" ? "menu" : undefined}
-                  aria-expanded={id === "accessibility" || id === "appearance" ? openMenu === id : undefined}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onClick();
-                  }}
-                  className={`group relative flex h-[20px] w-[28px] items-center justify-center rounded-[5px] ${
-                    tone === "light" ? (active ? "bg-black/[0.1]" : "hover:bg-black/[0.05]") : active ? "bg-white/25" : "hover:bg-white/15"
-                  }`}
-                >
-                  <Icon className="h-[15px] w-[15px]" strokeWidth={2} />
-                  {!active && (
-                    <span
-                      role="tooltip"
-                      className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] -translate-x-1/2 whitespace-nowrap rounded-[5px] bg-[#e4e4e7]/95 px-2.5 py-[3px] text-[12px] font-normal text-black/80 opacity-0 shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-opacity duration-100 [text-shadow:none] group-hover:opacity-100 group-hover:delay-500"
-                    >
-                      {label}
-                    </span>
-                  )}
-                </button>
-                {openMenu === id && (
-                  <MenuBarMenu
-                    kind={openMenu}
-                    theme={theme}
-                    onThemeChange={changeTheme}
-                    a11y={a11y}
-                    onA11yChange={changeA11y}
-                    onOpenSettings={openSettings}
-                    onClose={() => setOpenMenu(null)}
-                  />
-                )}
-                </div>
-              ))}
+              <MenuExtra
+                label="Reminders"
+                tone={tone}
+                active={!controlOpen && activeWindow === "reminders"}
+                onClick={() => {
+                  setControlOpen(false);
+                  openWindow("reminders");
+                }}
+              >
+                <ListChecksIcon className="h-[15px] w-[15px]" strokeWidth={2} />
+              </MenuExtra>
+              <MenuExtra label="Control Center" tone={tone} active={controlOpen} expanded={controlOpen} onClick={toggleControl}>
+                <ControlCenterGlyph />
+              </MenuExtra>
             </div>
             <time dateTime={now.toISOString()} className="whitespace-pre tabular-nums">
               {formatMenuTime(now)}
             </time>
           </div>
         </header>
+
+        {controlOpen && (
+          <div ref={controlRef} className="absolute top-[30px] z-[110]" style={{ right: controlRight }}>
+            <ControlCenter
+              isDark={isDark}
+              onThemeChange={changeTheme}
+              a11y={a11y}
+              onA11yChange={changeA11y}
+              onOpenSpinIt={() => {
+                setControlOpen(false);
+                openWindow("spinit");
+              }}
+            />
+          </div>
+        )}
 
         {/* Desktop icons scattered down both sides: the four projects on the left, About / Projects / CV / Notes
             on the right. Hover cards open toward the middle of the screen. */}
@@ -775,36 +759,6 @@ export function App() {
           </MacWindow>
         )}
 
-        {openWindows.settings && (
-          <MacWindow
-            title="System Settings"
-            initialPosition={settingsFrame.position}
-            initialSize={settingsFrame.size}
-            widthClassName=""
-            resizable
-            minSize={{ w: 600, h: 360 }}
-            {...windowProps("settings")}
-          >
-            {({ dragHandleProps, lights }) => (
-              <Settings
-                key={`${settingsPane}-${settingsOpenCount}`}
-                initialPane={settingsPane}
-                dragHandleProps={dragHandleProps}
-                lights={lights}
-                theme={theme}
-                onThemeChange={changeTheme}
-                wallpaperId={wallpaper.id}
-                onWallpaperChange={(id) => {
-                  changeWallpaper(id);
-                  setTheme(id === "black" ? "dark" : "light");
-                }}
-                a11y={a11y}
-                onA11yChange={changeA11y}
-              />
-            )}
-          </MacWindow>
-        )}
-
         {openWindows.spinit && (
           <MacWindow
             title="Spin it"
@@ -838,6 +792,60 @@ export function App() {
       </div>
       )}
     </main>
+  );
+}
+
+// A menu bar status icon with a grey label underneath on hover (hidden while it is active).
+function MenuExtra({
+  label,
+  tone,
+  active,
+  expanded,
+  onClick,
+  children,
+}: {
+  label: string;
+  tone: "light" | "dark";
+  active: boolean;
+  expanded?: boolean;
+  onClick: (button: HTMLButtonElement) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-expanded={expanded}
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick(event.currentTarget);
+      }}
+      className={`group relative flex h-[20px] w-[28px] items-center justify-center rounded-[5px] ${
+        tone === "light" ? (active ? "bg-black/[0.1]" : "hover:bg-black/[0.05]") : active ? "bg-white/25" : "hover:bg-white/15"
+      }`}
+    >
+      {children}
+      {!active && (
+        <span
+          role="tooltip"
+          className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] -translate-x-1/2 whitespace-nowrap rounded-[5px] bg-[#e4e4e7]/95 px-2.5 py-[3px] text-[12px] font-normal text-black/80 opacity-0 shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-opacity duration-100 [text-shadow:none] group-hover:opacity-100 group-hover:delay-500"
+        >
+          {label}
+        </span>
+      )}
+    </button>
+  );
+}
+
+// The macOS Control Center icon: two stacked switches, one on the left and one on the right.
+function ControlCenterGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[16px] w-[16px]" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <rect x="3" y="3.5" width="18" height="7" rx="3.5" />
+      <circle cx="17.5" cy="7" r="2" fill="currentColor" stroke="none" />
+      <rect x="3" y="13.5" width="18" height="7" rx="3.5" />
+      <circle cx="6.5" cy="17" r="2" fill="currentColor" stroke="none" />
+    </svg>
   );
 }
 
