@@ -8,7 +8,6 @@ import { Preview } from "./components/Preview";
 import { Browser } from "./components/Browser";
 import { caseStudies } from "./data/caseStudies";
 import { KimLLM } from "./components/KimLLM";
-import { Reminders } from "./components/Reminders";
 import { Notes } from "./components/Notes";
 import { notes } from "./data/notes";
 import type { ThemeSetting } from "./components/Settings";
@@ -18,16 +17,17 @@ import { WindowPreview } from "./components/WindowPreview";
 import { CompassIcon } from "lucide-react";
 import { MobileSafari } from "./components/MobileSafari";
 import { ControlCenter } from "./components/ControlCenter";
+import { ChecklistMenu } from "./components/ChecklistMenu";
 import { TrustBankCase } from "./components/TrustBankCase";
 import { aboutIcon, aboutPortrait } from "./data/aboutVideo";
-import { dockSections, finderIcon, spinItIcon } from "./data/dock";
+import { finderIcon, spinItIcon } from "./data/dock";
 import { projects, type Project } from "./data/portfolio";
 import { cvPdfIcon, notesIcon, projectFolderIcon } from "./data/projectFolderIcon";
 import { tagColorFor } from "./data/tags";
 import { defaultWallpaperId, nightFilter, wallpapers } from "./data/wallpaper";
 import { useScreenInit } from "./useScreenInit.js";
 
-type BaseWindow = "projects" | "about" | "cv" | "reminders" | "notes" | "spinit";
+type BaseWindow = "projects" | "about" | "cv" | "notes" | "spinit";
 // Each project's case study gets its own Safari-style window, named "case:<project title>".
 type CaseWindow = `case:${string}`;
 type WindowName = BaseWindow | CaseWindow;
@@ -43,16 +43,16 @@ type ScreenInit = {
   photoBoothInfo?: boolean;
 };
 
-const windowTitles: Record<BaseWindow, string> = { projects: "Projects", about: "Intro", cv: "CV.pdf", reminders: "Reminders", notes: "Notes", spinit: "Spin it" };
-const appNames: Record<BaseWindow, string> = { projects: "Projects", about: "Intro", cv: "Preview", reminders: "Reminders", notes: "Notes", spinit: "Spin it" };
+const windowTitles: Record<BaseWindow, string> = { projects: "Projects", about: "Intro", cv: "CV.pdf", notes: "Notes", spinit: "Spin it" };
+const appNames: Record<BaseWindow, string> = { projects: "Projects", about: "Intro", cv: "Preview", notes: "Notes", spinit: "Spin it" };
 const appNameOf = (name: WindowName) => (isCase(name) ? "Safari" : appNames[name]);
 
 
 // Window layout. The desktop icons are scattered down both sides of the screen (projects on the left,
 // About / Projects / CV / Notes on the right), and windows open centred on the screen in the space between
 // them, so they don't cover the icons or the hover cards that open toward the middle.
-// Exceptions: Spin it sits in the bottom-right corner, under the right-hand icons; Reminders drops down under
-// its menu bar icon; case studies open large between the two icon columns.
+// Exceptions: Spin it sits in the bottom-right corner, under the right-hand icons; case studies open large
+// between the two icon columns. The checklist and Control Center are menu bar drop-downs, not windows.
 const leftIconsWidth = 64 + 150; // furthest-in left icon: 64px from the edge, 150px wide
 const rightIconsWidth = 60 + 120; // furthest-in right icon: 60px from the edge, 120px wide
 const iconGap = 24; // space between the windows and the icons
@@ -81,7 +81,6 @@ const viewportHeight = () => Math.max(typeof window === "undefined" ? 800 : wind
 const windowSizes = {
   about: { w: 700, h: 530 },
   spinit: { w: 420, h: 212 },
-  reminders: { w: 480, h: 690 },
   document: { w: 1100, h: 780 }, // Projects, CV, Notes and the case studies
 };
 
@@ -118,14 +117,6 @@ function spinItCorner(): { position: { x: number; y: number }; size: WindowSize 
   const belowIcons = Math.round(rightTops[rightTops.length - 1] * H) + 125 + 16;
   return { position: { x: viewportWidth() - 32 - w, y: Math.min(H - h - 8, Math.max(belowIcons, H - 48 - h)) }, size: { w, h } };
 }
-// Reminders (Scheduled) drops down just under the menu bar, its right edge lined up a little past its icon.
-function remindersUnderIcon(iconRight: number | null): { position: { x: number; y: number }; size: WindowSize } {
-  const { w } = windowSizes.reminders;
-  const top = 28;
-  const h = Math.min(windowSizes.reminders.h, viewportHeight() - top - 16);
-  const right = iconRight ?? viewportWidth() - 160;
-  return { position: { x: Math.max(8, Math.round(right + 12 - w)), y: top }, size: { w, h } };
-}
 // Case studies open large, filling the space between the left and right desktop icons (top to near the
 // bottom); scrolling the page then grows the window to fill the whole desktop.
 function caseFrame(stack: number): { position: { x: number; y: number }; size: WindowSize } {
@@ -155,12 +146,10 @@ function formatMenuTime(date: Date) {
 }
 
 // Dock thumbnail of a minimized window: a shrunken copy of the window with its app's icon in the corner.
-const remindersIcon = dockSections.flat().find((app) => app.id === "reminders")?.imageUrl ?? "";
 const appIconSrc: Record<BaseWindow, string> = {
   projects: finderIcon,
   about: aboutIcon,
   cv: cvPdfIcon,
-  reminders: remindersIcon,
   notes: notesIcon,
   spinit: spinItIcon,
 };
@@ -231,7 +220,6 @@ export function App() {
     about: screenInit.openWindows?.about ?? true,
     projects: screenInit.openWindows?.projects ?? false,
     cv: screenInit.openWindows?.cv ?? false,
-    reminders: screenInit.openWindows?.reminders ?? false,
     notes: screenInit.openWindows?.notes ?? false,
     spinit: screenInit.openWindows?.spinit ?? false, // hidden at first; opens from the Dock
     ...Object.fromEntries(caseWindows.map((name) => [name, screenInit.openWindows?.[name] ?? false])),
@@ -245,7 +233,6 @@ export function App() {
     projects: 20,
     cv: 25,
     ...Object.fromEntries(caseWindows.map((name, i) => [name, 26 + i * 0.1])),
-    reminders: 27,
     notes: 28,
     about: 30,
   });
@@ -343,32 +330,40 @@ export function App() {
     focusWindow(windowName);
   }
 
-  // Menu bar extras (between Kim LLM and the clock) replace the Dock's app icons: the checklist opens
-  // Reminders, and the two-switch icon opens Control Center (accessibility, Dark Mode and Spin it's music).
-  const [controlOpen, setControlOpen] = useState(false);
-  const [remindersIconRight, setRemindersIconRight] = useState<number | null>(null);
+  // Menu bar extras (between Kim LLM and the clock) replace the Dock's app icons. Each opens a drop-down
+  // under its icon and clicking the icon again closes it: the checklist ("Scheduled", the visitor's guide to
+  // the portfolio) and Control Center (accessibility, Dark Mode and Spin it's music). Only one is open at a time.
+  const [openMenu, setOpenMenu] = useState<"checklist" | "control" | null>(null);
+  const [checklistLeft, setChecklistLeft] = useState(8);
   // How far each case-study page is scrolled (0–1); its window grows to fill the desktop as it goes.
   const [caseExpand, setCaseExpand] = useState<Record<string, number>>({});
   const [controlRight, setControlRight] = useState(8);
   const extrasRef = useRef<HTMLDivElement>(null);
-  const controlRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const desktopRef = useRef<HTMLDivElement>(null);
-  // Control Center is drawn outside the menu bar, lined up under the right edge of its icon.
+  // The drop-downs are drawn outside the menu bar: the checklist starts at its icon's left edge (like a macOS
+  // status menu, kept on screen), Control Center lines up under the right edge of its icon.
+  function toggleChecklist(button: HTMLElement) {
+    const host = desktopRef.current?.getBoundingClientRect();
+    const icon = button.getBoundingClientRect();
+    if (host) setChecklistLeft(Math.max(8, Math.min(Math.round(icon.left - host.left - 6), Math.round(host.width - 312 - 8))));
+    setOpenMenu((menu) => (menu === "checklist" ? null : "checklist"));
+  }
   function toggleControl(button: HTMLElement) {
     const host = desktopRef.current?.getBoundingClientRect();
     const icon = button.getBoundingClientRect();
     if (host) setControlRight(Math.max(8, Math.round(host.right - icon.right - 8)));
-    setControlOpen((v) => !v);
+    setOpenMenu((menu) => (menu === "control" ? null : "control"));
   }
-  // Close Control Center on a click anywhere else, or with Esc, like macOS.
+  // Close the open drop-down on a click anywhere else, or with Esc, like macOS.
   useEffect(() => {
-    if (!controlOpen) return;
+    if (!openMenu) return;
     const onDown = (event: PointerEvent) => {
       const target = event.target as Node;
-      if (!extrasRef.current?.contains(target) && !controlRef.current?.contains(target)) setControlOpen(false);
+      if (!extrasRef.current?.contains(target) && !menuRef.current?.contains(target)) setOpenMenu(null);
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setControlOpen(false);
+      if (event.key === "Escape") setOpenMenu(null);
     };
     window.addEventListener("pointerdown", onDown);
     window.addEventListener("keydown", onKey);
@@ -376,7 +371,7 @@ export function App() {
       window.removeEventListener("pointerdown", onDown);
       window.removeEventListener("keydown", onKey);
     };
-  }, [controlOpen]);
+  }, [openMenu]);
 
   const minimizedInDock: MinimizedWindow[] = minimizeOrder
     .filter((name) => openWindows[name])
@@ -400,7 +395,6 @@ export function App() {
   const cvFrame = sideWindowFrame(stackFor("cv"));
   const notesFrame = sideWindowFrame(stackFor("notes"));
   // The other windows open at their own sizes in the same free area.
-  const remindersFrame = remindersUnderIcon(remindersIconRight);
   const spinItFrame = spinItCorner();
   const introFrame = windowFrame(windowSizes.about, stackFor("about"));
 
@@ -570,20 +564,10 @@ export function App() {
             </button>
             {/* Menu bar extras, like the status icons on a Mac: a grey label appears under an icon on hover. */}
             <div ref={extrasRef} className="-mx-[4px] flex items-center gap-[2px]">
-              <MenuExtra
-                label="Reminders"
-                tone={tone}
-                active={!controlOpen && activeWindow === "reminders"}
-                onClick={(button) => {
-                  const host = desktopRef.current?.getBoundingClientRect();
-                  if (host) setRemindersIconRight(Math.round(button.getBoundingClientRect().right - host.left));
-                  setControlOpen(false);
-                  openWindow("reminders");
-                }}
-              >
+              <MenuExtra label="Scheduled" tone={tone} active={openMenu === "checklist"} expanded={openMenu === "checklist"} onClick={toggleChecklist}>
                 <RemindersGlyph />
               </MenuExtra>
-              <MenuExtra label="Control Center" tone={tone} active={controlOpen} expanded={controlOpen} onClick={toggleControl}>
+              <MenuExtra label="Control Center" tone={tone} active={openMenu === "control"} expanded={openMenu === "control"} onClick={toggleControl}>
                 <ControlCenterGlyph />
               </MenuExtra>
             </div>
@@ -593,15 +577,33 @@ export function App() {
           </div>
         </header>
 
-        {controlOpen && (
-          <div ref={controlRef} className="absolute top-[30px] z-[110]" style={{ right: controlRight }}>
+        {openMenu === "checklist" && (
+          <div ref={menuRef} className="absolute top-[30px] z-[110]" style={{ left: checklistLeft }}>
+            <ChecklistMenu
+              icon={<RemindersGlyph />}
+              onClose={() => setOpenMenu(null)}
+              onNavigate={(step) => {
+                if (step === "intro" || step === "about") openWindow("about");
+                else if (step === "projects") openWindow("projects");
+                else if (step === "cv") openWindow("cv");
+                else if (step.startsWith("case:")) {
+                  const project = projects.find((p) => p.title === step.slice(5));
+                  if (project) openProject(project);
+                }
+              }}
+            />
+          </div>
+        )}
+
+        {openMenu === "control" && (
+          <div ref={menuRef} className="absolute top-[30px] z-[110]" style={{ right: controlRight }}>
             <ControlCenter
               isDark={isDark}
               onThemeChange={changeTheme}
               a11y={a11y}
               onA11yChange={changeA11y}
               onOpenSpinIt={() => {
-                setControlOpen(false);
+                setOpenMenu(null);
                 openWindow("spinit");
               }}
             />
@@ -750,29 +752,6 @@ export function App() {
           );
         })}
 
-        {openWindows.reminders && (
-          <MacWindow
-            title="Reminders"
-            initialPosition={remindersFrame.position}
-            initialSize={remindersFrame.size}
-            widthClassName=""
-            resizable
-            minSize={{ w: 380, h: 360 }}
-            {...windowProps("reminders")}
-          >
-            {({ dragHandleProps, lights }) => <Reminders
-                dragHandleProps={dragHandleProps}
-                lights={lights}
-                onNavigate={(step) => {
-                  if (step === "intro" || step === "about") openWindow("about");
-                  else if (step === "projects") openWindow("projects");
-                  else if (step === "cv") openWindow("cv");
-                  else if (step.startsWith("case:")) openWindow(step as CaseWindow);
-                }}
-              />}
-          </MacWindow>
-        )}
-
         {openWindows.notes && (
           <MacWindow
             title="Notes"
@@ -809,7 +788,7 @@ export function App() {
             minSize={{ w: 420, h: 320 }}
             {...windowProps("about")}
           >
-            <IntroCall initialShowInfo={screenInit.photoBoothInfo ?? false} onBookCall={() => openWindow("reminders")} onOpenCv={() => openWindow("cv")} />
+            <IntroCall initialShowInfo={screenInit.photoBoothInfo ?? false} onOpenCv={() => openWindow("cv")} />
           </MacWindow>
         )}
 
@@ -866,7 +845,7 @@ function MenuExtra({
 }
 
 // Menu bar glyphs, drawn on a 16px grid with the same 1.4px line so they match each other and the clock text.
-// Reminders: a short list of round tick-boxes, like the Reminders app.
+// Checklist ("Scheduled"): a short list of round tick-boxes, like the Reminders app.
 function RemindersGlyph() {
   return (
     <svg viewBox="0 0 16 16" className="h-[16px] w-[16px]" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" aria-hidden="true">
