@@ -15,7 +15,7 @@ import type { ThemeSetting } from "./components/Settings";
 import type { A11ySettings } from "./components/AccessibilityPane";
 import { SpinIt } from "./components/SpinIt";
 import { WindowPreview } from "./components/WindowPreview";
-import { CompassIcon, ListChecksIcon } from "lucide-react";
+import { CompassIcon } from "lucide-react";
 import { MobileSafari } from "./components/MobileSafari";
 import { ControlCenter } from "./components/ControlCenter";
 import { aboutIcon, aboutPortrait } from "./data/aboutVideo";
@@ -50,8 +50,8 @@ const appNameOf = (name: WindowName) => (isCase(name) ? "Safari" : appNames[name
 // Window layout. The desktop icons are scattered down both sides of the screen (projects on the left,
 // About / Projects / CV / Notes on the right), and windows open centred on the screen in the space between
 // them, so they don't cover the icons or the hover cards that open toward the middle.
-// Exceptions: Spin it sits in the bottom-right corner, under the right-hand icons, and Reminders opens along
-// the left edge.
+// Exceptions: Spin it sits in the bottom-right corner, under the right-hand icons; Reminders drops down under
+// its menu bar icon; case studies open large between the two icon columns.
 const leftIconsWidth = 64 + 150; // furthest-in left icon: 64px from the edge, 150px wide
 const rightIconsWidth = 60 + 120; // furthest-in right icon: 60px from the edge, 120px wide
 const iconGap = 24; // space between the windows and the icons
@@ -117,12 +117,23 @@ function spinItCorner(): { position: { x: number; y: number }; size: WindowSize 
   const belowIcons = Math.round(rightTops[rightTops.length - 1] * H) + 125 + 16;
   return { position: { x: viewportWidth() - 32 - w, y: Math.min(H - h - 8, Math.max(belowIcons, H - 48 - h)) }, size: { w, h } };
 }
-// Reminders (Scheduled) opens docked to the left edge, beside the centred Intro window, like a sidebar list.
-function remindersLeft(): { position: { x: number; y: number }; size: WindowSize } {
+// Reminders (Scheduled) drops down just under the menu bar, its right edge lined up a little past its icon.
+function remindersUnderIcon(iconRight: number | null): { position: { x: number; y: number }; size: WindowSize } {
   const { w } = windowSizes.reminders;
-  const top = 92;
-  const h = Math.min(windowSizes.reminders.h, viewportHeight() - top - 24);
-  return { position: { x: 40, y: top }, size: { w, h } };
+  const top = 28;
+  const h = Math.min(windowSizes.reminders.h, viewportHeight() - top - 16);
+  const right = iconRight ?? viewportWidth() - 160;
+  return { position: { x: Math.max(8, Math.round(right + 12 - w)), y: top }, size: { w, h } };
+}
+// Case studies open large, filling the space between the left and right desktop icons (top to near the
+// bottom); scrolling the page then grows the window to fill the whole desktop.
+function caseFrame(stack: number): { position: { x: number; y: number }; size: WindowSize } {
+  const left = leftIconsWidth + 16;
+  const right = viewportWidth() - rightIconsWidth - 16;
+  const top = 54;
+  const bottom = viewportHeight() - 16;
+  const d = (stack % maxCascade) * 24;
+  return { position: { x: left + d, y: top + d }, size: { w: right - left - d, h: bottom - top - d } };
 }
 const sideWindowFrame = (stack: number) => windowFrame(windowSizes.document, stack);
 
@@ -334,6 +345,9 @@ export function App() {
   // Menu bar extras (between Kim LLM and the clock) replace the Dock's app icons: the checklist opens
   // Reminders, and the two-switch icon opens Control Center (accessibility, Dark Mode and Spin it's music).
   const [controlOpen, setControlOpen] = useState(false);
+  const [remindersIconRight, setRemindersIconRight] = useState<number | null>(null);
+  // How far each case-study page is scrolled (0–1); its window grows to fill the desktop as it goes.
+  const [caseExpand, setCaseExpand] = useState<Record<string, number>>({});
   const [controlRight, setControlRight] = useState(8);
   const extrasRef = useRef<HTMLDivElement>(null);
   const controlRef = useRef<HTMLDivElement>(null);
@@ -386,7 +400,7 @@ export function App() {
   const cvFrame = sideWindowFrame(stackFor("cv"));
   const notesFrame = sideWindowFrame(stackFor("notes"));
   // The other windows open at their own sizes in the same free area.
-  const remindersFrame = remindersLeft();
+  const remindersFrame = remindersUnderIcon(remindersIconRight);
   const spinItFrame = spinItCorner();
   const introFrame = windowFrame(windowSizes.about, stackFor("about"));
 
@@ -560,12 +574,14 @@ export function App() {
                 label="Reminders"
                 tone={tone}
                 active={!controlOpen && activeWindow === "reminders"}
-                onClick={() => {
+                onClick={(button) => {
+                  const host = desktopRef.current?.getBoundingClientRect();
+                  if (host) setRemindersIconRight(Math.round(button.getBoundingClientRect().right - host.left));
                   setControlOpen(false);
                   openWindow("reminders");
                 }}
               >
-                <ListChecksIcon className="h-[15px] w-[15px]" strokeWidth={2} />
+                <RemindersGlyph />
               </MenuExtra>
               <MenuExtra label="Control Center" tone={tone} active={controlOpen} expanded={controlOpen} onClick={toggleControl}>
                 <ControlCenterGlyph />
@@ -694,7 +710,7 @@ export function App() {
         {/* One Safari-style window per project case study; each opens, moves and minimizes on its own. */}
         {caseWindows.map((name) => {
           if (!openWindows[name]) return null;
-          const frame = sideWindowFrame(stackFor(name));
+          const frame = caseFrame(caseWindows.filter((other) => other !== name && openWindows[other] && !minimized[other]).length);
           const page = pageOf(name);
           const index = caseOrder.indexOf(page);
           const goTo = (i: number) => () => setCasePage((current) => ({ ...current, [name]: caseOrder[i] }));
@@ -707,6 +723,7 @@ export function App() {
               widthClassName=""
               resizable
               minSize={{ w: 600, h: 360 }}
+              expand={caseExpand[name] ?? 0}
               {...windowProps(name)}
             >
               {({ dragHandleProps, lights }) => (
@@ -714,6 +731,7 @@ export function App() {
                   dragHandleProps={dragHandleProps}
                   lights={lights}
                   article={caseStudies[page]}
+                  onScrollProgress={(p) => setCaseExpand((current) => (current[name] === p ? current : { ...current, [name]: p }))}
                   onBack={index > 0 ? goTo(index - 1) : undefined}
                   onForward={index < caseOrder.length - 1 ? goTo(index + 1) : undefined}
                 />
@@ -820,7 +838,7 @@ function MenuExtra({
         event.stopPropagation();
         onClick(event.currentTarget);
       }}
-      className={`group relative flex h-[20px] w-[28px] items-center justify-center rounded-[5px] ${
+      className={`group relative flex h-[22px] w-[30px] items-center justify-center rounded-[6px] ${
         tone === "light" ? (active ? "bg-black/[0.1]" : "hover:bg-black/[0.05]") : active ? "bg-white/25" : "hover:bg-white/15"
       }`}
     >
@@ -837,14 +855,27 @@ function MenuExtra({
   );
 }
 
-// The macOS Control Center icon: two stacked switches, one on the left and one on the right.
+// Menu bar glyphs, drawn on a 16px grid with the same 1.4px line so they match each other and the clock text.
+// Reminders: a short list of round tick-boxes, like the Reminders app.
+function RemindersGlyph() {
+  return (
+    <svg viewBox="0 0 16 16" className="h-[16px] w-[16px]" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" aria-hidden="true">
+      <circle cx="3.5" cy="4" r="1.7" />
+      <circle cx="3.5" cy="12" r="1.7" />
+      <circle cx="3.5" cy="8" r="1.7" fill="currentColor" stroke="none" />
+      <path d="M7.5 4h6.5M7.5 8h6.5M7.5 12h6.5" />
+    </svg>
+  );
+}
+
+// Control Center: two stacked switches, the top one on and the bottom one off, like the macOS icon.
 function ControlCenterGlyph() {
   return (
-    <svg viewBox="0 0 24 24" className="h-[16px] w-[16px]" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-      <rect x="3" y="3.5" width="18" height="7" rx="3.5" />
-      <circle cx="17.5" cy="7" r="2" fill="currentColor" stroke="none" />
-      <rect x="3" y="13.5" width="18" height="7" rx="3.5" />
-      <circle cx="6.5" cy="17" r="2" fill="currentColor" stroke="none" />
+    <svg viewBox="0 0 16 16" className="h-[16px] w-[16px]" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+      <rect x="1.2" y="1.7" width="13.6" height="5.6" rx="2.8" />
+      <circle cx="11.9" cy="4.5" r="1.6" fill="currentColor" stroke="none" />
+      <rect x="1.2" y="8.7" width="13.6" height="5.6" rx="2.8" />
+      <circle cx="4.1" cy="11.5" r="1.6" fill="currentColor" stroke="none" />
     </svg>
   );
 }

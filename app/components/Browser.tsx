@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon, LockIcon, PlusIcon, RotateCwIcon, ShareIcon } from "lucide-react";
 import type { DragHandleProps } from "./MacWindow";
 import type { CaseStudy } from "../data/caseStudies";
@@ -13,6 +13,7 @@ export function Browser({
   article,
   onBack,
   onForward,
+  onScrollProgress,
 }: {
   dragHandleProps: DragHandleProps;
   lights: React.ReactNode;
@@ -20,7 +21,15 @@ export function Browser({
   /** Go to the previous / next project's page; leave undefined to disable the arrow. */
   onBack?: () => void;
   onForward?: () => void;
+  /** How far the page has been scrolled, from 0 (top) to 1 (240px down); the window grows with it. */
+  onScrollProgress?: (progress: number) => void;
 }) {
+  // A new page starts at the top, so the window goes back to its normal size.
+  useEffect(() => {
+    onScrollProgress?.(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [article.url]);
+
   return (
     <div className="flex h-full flex-col bg-white">
       {/* Unified toolbar: traffic lights, back/forward, address field, actions */}
@@ -68,7 +77,13 @@ export function Browser({
       </div>
 
       {/* Page */}
-      <div key={article.url} data-keep-light="" data-readable="" className="min-h-0 flex-1 select-text overflow-auto bg-white text-[#1d1d1f]">
+      <div
+        key={article.url}
+        data-keep-light=""
+        data-readable=""
+        onScroll={(e) => onScrollProgress?.(Math.min(1, Math.max(0, e.currentTarget.scrollTop / 240)))}
+        className="min-h-0 flex-1 select-text overflow-auto bg-white text-[#1d1d1f]"
+      >
         <header className="px-10 pb-12 pt-10 text-white" style={{ background: article.brandColor }}>
           <img src={article.logo} alt="" className={article.logoClassName ?? "h-[44px] w-auto rounded-[4px]"} draggable={false} />
           <p className="mt-10 text-[12px] font-semibold uppercase tracking-[0.1em] text-white/80">{article.eyebrow}</p>

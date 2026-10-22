@@ -34,6 +34,8 @@ type MacWindowProps = {
   /** Let the user drag the window's edges and corners to resize it, like macOS. */
   resizable?: boolean;
   minSize?: WindowSize;
+  /** 0–1: grow from the window's own frame toward filling the desktop under the menu bar (driven by scrolling). */
+  expand?: number;
   /** Pass a function to draw your own unified toolbar (e.g. Finder) instead of the default title bar. */
   children: ReactNode | ((ctx: RenderContext) => ReactNode);
 };
@@ -113,6 +115,7 @@ export function MacWindow({
   titleAlign = "center",
   resizable = false,
   minSize = { w: 420, h: 300 },
+  expand = 0,
   children,
 }: MacWindowProps) {
   const [position, setPosition] = useState(initialPosition);
@@ -272,9 +275,20 @@ export function MacWindow({
     <TrafficLights isActive={isActive} dark={isDark} title={title} zoomed={zoomed} onClose={onClose} onMinimize={minimize} onZoom={resizable ? toggleZoom : undefined} />
   );
 
+  // Scroll-to-grow: blend the window's frame with the whole desktop below the 24px menu bar.
+  const p = zoomed || !size ? 0 : Math.min(1, Math.max(0, expand));
   const frameStyle: React.CSSProperties = zoomed
     ? { left: 0, top: 0, width: "100%", height: "100%", zIndex: 400 }
-    : { left: position.x, top: position.y, zIndex, ...(size ? { width: size.w, height: size.h } : {}) };
+    : p > 0 && size
+      ? {
+          left: position.x * (1 - p),
+          top: position.y * (1 - p) + 24 * p,
+          width: `calc(${size.w * (1 - p)}px + ${p * 100}%)`,
+          height: `calc(${size.h * (1 - p)}px + ${p} * (100% - 24px))`,
+          borderRadius: 12 * (1 - p),
+          zIndex,
+        }
+      : { left: position.x, top: position.y, zIndex, ...(size ? { width: size.w, height: size.h } : {}) };
 
   return (
     <section
@@ -316,6 +330,7 @@ export function MacWindow({
 
       {resizable &&
         !zoomed &&
+        p === 0 &&
         !minimized &&
         resizeHandles.map(({ edge, className }) => (
           <div
