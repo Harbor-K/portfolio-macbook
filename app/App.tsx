@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { DesktopIcon, HintCard, labelClass, selectionClass, type IconHint } from "./components/DesktopIcon";
 import { Dock, type MinimizedWindow } from "./components/Dock";
 import { Finder, type FinderItem, type FinderLocation } from "./components/Finder";
@@ -17,6 +17,7 @@ import { SpinIt } from "./components/SpinIt";
 import { WindowPreview } from "./components/WindowPreview";
 import { AccessibilityIcon, CompassIcon, ContrastIcon, ListChecksIcon, MusicIcon, type LucideIcon } from "lucide-react";
 import { MobileSafari } from "./components/MobileSafari";
+import { MenuBarMenu, type MenuBarMenuKind } from "./components/MenuBarMenu";
 import { aboutIcon, aboutPortrait } from "./data/aboutVideo";
 import { dockSections, finderIcon, settingsIcon, spinItIcon } from "./data/dock";
 import { projects, type Project } from "./data/portfolio";
@@ -335,7 +336,8 @@ export function App() {
   }
 
   // Menu bar extras (between Kim LLM and the clock) replace the Dock's app icons. Accessibility and Appearance
-  // open System Settings on that pane; the music note opens Spin it; the checklist opens Reminders.
+  // open a macOS-style drop-down menu (quick toggles, plus a row into System Settings); the music note opens
+  // Spin it; the checklist opens Reminders.
   const [settingsPane, setSettingsPane] = useState<SettingsPane>("appearance");
   const [settingsOpenCount, setSettingsOpenCount] = useState(0);
   function openSettings(pane: SettingsPane) {
@@ -343,11 +345,30 @@ export function App() {
     setSettingsOpenCount((n) => n + 1); // re-open on the requested pane even if Settings is already open
     openWindow("settings");
   }
+  const [openMenu, setOpenMenu] = useState<MenuBarMenuKind | null>(null);
+  const extrasRef = useRef<HTMLDivElement>(null);
+  const toggleMenu = (kind: MenuBarMenuKind) => setOpenMenu((current) => (current === kind ? null : kind));
+  // Close the open menu on a click anywhere else, or with Esc, like macOS.
+  useEffect(() => {
+    if (!openMenu) return;
+    const onDown = (event: PointerEvent) => {
+      if (!extrasRef.current?.contains(event.target as Node)) setOpenMenu(null);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenMenu(null);
+    };
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [openMenu]);
   const menuExtras: { id: string; label: string; icon: LucideIcon; active: boolean; onClick: () => void }[] = [
-    { id: "accessibility", label: "Accessibility", icon: AccessibilityIcon, active: activeWindow === "settings" && settingsPane === "accessibility", onClick: () => openSettings("accessibility") },
-    { id: "appearance", label: "Appearance", icon: ContrastIcon, active: activeWindow === "settings" && settingsPane === "appearance", onClick: () => openSettings("appearance") },
-    { id: "spinit", label: "Spin it", icon: MusicIcon, active: activeWindow === "spinit", onClick: () => openWindow("spinit") },
-    { id: "reminders", label: "Reminders", icon: ListChecksIcon, active: activeWindow === "reminders", onClick: () => openWindow("reminders") },
+    { id: "accessibility", label: "Accessibility", icon: AccessibilityIcon, active: openMenu === "accessibility", onClick: () => toggleMenu("accessibility") },
+    { id: "appearance", label: "Appearance", icon: ContrastIcon, active: openMenu === "appearance", onClick: () => toggleMenu("appearance") },
+    { id: "spinit", label: "Spin it", icon: MusicIcon, active: !openMenu && activeWindow === "spinit", onClick: () => { setOpenMenu(null); openWindow("spinit"); } },
+    { id: "reminders", label: "Reminders", icon: ListChecksIcon, active: !openMenu && activeWindow === "reminders", onClick: () => { setOpenMenu(null); openWindow("reminders"); } },
   ];
 
   const minimizedInDock: MinimizedWindow[] = minimizeOrder
@@ -541,12 +562,14 @@ export function App() {
               Kim LLM
             </button>
             {/* Menu bar extras, like the status icons on a Mac: a grey label appears under an icon on hover. */}
-            <div className="-mx-[4px] flex items-center gap-[2px]">
+            <div ref={extrasRef} className="-mx-[4px] flex items-center gap-[2px]">
               {menuExtras.map(({ id, label, icon: Icon, active, onClick }) => (
+                <div key={id} className="relative">
                 <button
-                  key={id}
                   type="button"
                   aria-label={label}
+                  aria-haspopup={id === "accessibility" || id === "appearance" ? "menu" : undefined}
+                  aria-expanded={id === "accessibility" || id === "appearance" ? openMenu === id : undefined}
                   onClick={(event) => {
                     event.stopPropagation();
                     onClick();
@@ -556,13 +579,27 @@ export function App() {
                   }`}
                 >
                   <Icon className="h-[15px] w-[15px]" strokeWidth={2} />
-                  <span
-                    role="tooltip"
-                    className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] -translate-x-1/2 whitespace-nowrap rounded-[5px] bg-[#e4e4e7]/95 px-2.5 py-[3px] text-[12px] font-normal text-black/80 opacity-0 shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-opacity duration-100 [text-shadow:none] group-hover:opacity-100 group-hover:delay-500"
-                  >
-                    {label}
-                  </span>
+                  {!active && (
+                    <span
+                      role="tooltip"
+                      className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] -translate-x-1/2 whitespace-nowrap rounded-[5px] bg-[#e4e4e7]/95 px-2.5 py-[3px] text-[12px] font-normal text-black/80 opacity-0 shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-opacity duration-100 [text-shadow:none] group-hover:opacity-100 group-hover:delay-500"
+                    >
+                      {label}
+                    </span>
+                  )}
                 </button>
+                {openMenu === id && (
+                  <MenuBarMenu
+                    kind={openMenu}
+                    theme={theme}
+                    onThemeChange={changeTheme}
+                    a11y={a11y}
+                    onA11yChange={changeA11y}
+                    onOpenSettings={openSettings}
+                    onClose={() => setOpenMenu(null)}
+                  />
+                )}
+                </div>
               ))}
             </div>
             <time dateTime={now.toISOString()} className="whitespace-pre tabular-nums">
