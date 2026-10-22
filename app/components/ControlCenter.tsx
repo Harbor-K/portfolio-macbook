@@ -7,7 +7,8 @@ import { player, usePlayer } from "./player";
 
 // Control Center, opened from the menu bar (the two-switch icon), modelled on macOS Control Center:
 // accessibility toggles as pill tiles on the left, Now Playing for Spin it on the right, a Dark Mode tile,
-// and a Sound slider. It replaces the old System Settings window.
+// and a Sound slider. It replaces the old System Settings window. The panel is solid (no backdrop blur), so
+// nothing behind it shows through or leaves a light haze around its edges.
 const a11yTiles: { key: keyof A11ySettings; title: string; icon: LucideIcon }[] = [
   { key: "reduceMotion", title: "Reduce motion", icon: PauseIcon },
   { key: "increaseContrast", title: "Increase contrast", icon: ContrastIcon },
@@ -37,7 +38,7 @@ export function ControlCenter({
       role="dialog"
       aria-label="Control Center"
       onClick={(event) => event.stopPropagation()}
-      className="w-[312px] rounded-[24px] border border-white/20 bg-[rgba(58,58,64,0.74)] p-[12px] text-left font-normal text-white shadow-[0_18px_50px_rgba(0,0,0,0.32)] backdrop-blur-2xl backdrop-saturate-150 [text-shadow:none]"
+      className="w-[312px] rounded-[24px] border border-white/[0.12] bg-[#38383d] p-[12px] text-left font-normal text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] [text-shadow:none]"
     >
       <style>{`
         .cc-range { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 999px; outline: none; cursor: pointer; }

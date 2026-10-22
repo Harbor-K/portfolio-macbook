@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ArchiveIcon, AtSignIcon, Disc3Icon, FileTextIcon, FolderIcon, HelpCircleIcon } from "lucide-react";
 
 type DesktopIconKind = "folder" | "avatar" | "image" | "pdf" | "disc" | "globe" | "contact" | "archive" | "news" | "flag";
@@ -34,20 +35,89 @@ export function selectionClass(tone: "light" | "dark", selected: boolean) {
 
 /** Small hover card beside a desktop item, opening toward the middle of the screen: to the left of the
  *  right-hand icons (the default) and to the right of the left-hand ones.
- *  It is compact, waits half a second before showing (so passing over the icons doesn't flash cards),
- *  and the windows are laid out to keep these strips clear. */
+ *  It is compact and waits half a second before showing (so passing over the icons doesn't flash cards).
+ *  It is drawn in a layer above everything on the desktop, so open windows never cover it, and it goes away
+ *  when the item is clicked. Place it inside the item's button: it follows that button's hover and focus. */
 export function HintCard({ hint, side = "left" }: { hint: IconHint; side?: "left" | "right" }) {
-  const place = side === "left" ? "right-full mr-1.5 translate-x-1" : "left-full ml-1.5 -translate-x-1";
+  const anchorRef = useRef<HTMLSpanElement>(null);
+  const [layer, setLayer] = useState<HTMLElement | null>(null);
+  const [pos, setPos] = useState<{ top: number; left?: number; right?: number } | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const host = anchorRef.current?.parentElement;
+    if (!host) return;
+    setLayer(host.closest("main") ?? document.body);
+    let timer: number | undefined;
+    let suppressed = false;
+    const place = () => {
+      const r = host.getBoundingClientRect();
+      setPos(side === "left" ? { top: r.top + 8, right: window.innerWidth - r.left + 6 } : { top: r.top + 8, left: r.right + 6 });
+    };
+    const show = (delay: number) => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        place();
+        setVisible(true);
+      }, delay);
+    };
+    const hide = () => {
+      window.clearTimeout(timer);
+      setVisible(false);
+    };
+    const onEnter = () => {
+      if (!suppressed) show(500);
+    };
+    const onLeave = () => {
+      suppressed = false;
+      if (!host.matches(":focus-visible")) hide();
+    };
+    const onDown = () => {
+      suppressed = true;
+      hide();
+    };
+    const onFocus = () => {
+      if (host.matches(":focus-visible")) show(0);
+    };
+    host.addEventListener("pointerenter", onEnter);
+    host.addEventListener("pointerleave", onLeave);
+    host.addEventListener("pointerdown", onDown);
+    host.addEventListener("focus", onFocus);
+    host.addEventListener("blur", hide);
+    window.addEventListener("scroll", hide, true);
+    return () => {
+      window.clearTimeout(timer);
+      host.removeEventListener("pointerenter", onEnter);
+      host.removeEventListener("pointerleave", onLeave);
+      host.removeEventListener("pointerdown", onDown);
+      host.removeEventListener("focus", onFocus);
+      host.removeEventListener("blur", hide);
+      window.removeEventListener("scroll", hide, true);
+    };
+  }, [side]);
+
+  const shift = side === "left" ? "translate-x-1" : "-translate-x-1";
   return (
-    <span
-      role="tooltip"
-      className={`pointer-events-none absolute top-2 z-20 ${place} w-[196px] rounded-[10px] border border-black/[0.08] bg-white/95 px-2.5 py-2 text-left opacity-0 shadow-[0_6px_18px_rgba(0,0,0,0.14)] backdrop-blur-xl transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100 group-hover:delay-500 group-focus-visible:translate-x-0 group-focus-visible:opacity-100`}
-    >
-      {hint.eyebrow && <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-black/45">{hint.eyebrow}</span>}
-      <span className="mt-0.5 block text-[12px] font-semibold leading-[16px] text-black/85">{hint.title}</span>
-      {hint.body && <span className="mt-0.5 block text-[11px] leading-[15px] text-black/55">{hint.body}</span>}
-      {hint.action && <span className="mt-1.5 block text-[11px] font-medium text-[color:var(--system-blue)]">{hint.action}</span>}
-    </span>
+    <>
+      <span ref={anchorRef} hidden />
+      {layer &&
+        pos &&
+        createPortal(
+          <span
+            role="tooltip"
+            style={{ position: "fixed", top: pos.top, left: pos.left, right: pos.right, zIndex: 1000 }}
+            className={`pointer-events-none block w-[196px] rounded-[10px] border border-black/[0.08] bg-white/95 px-2.5 py-2 text-left text-[13px] leading-4 shadow-[0_6px_18px_rgba(0,0,0,0.14)] backdrop-blur-xl transition-[opacity,transform] duration-150 ${
+              visible ? "translate-x-0 opacity-100" : `${shift} opacity-0`
+            }`}
+          >
+            {hint.eyebrow && <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-black/45">{hint.eyebrow}</span>}
+            <span className="mt-0.5 block text-[12px] font-semibold leading-[16px] text-black/85">{hint.title}</span>
+            {hint.body && <span className="mt-0.5 block text-[11px] leading-[15px] text-black/55">{hint.body}</span>}
+            {hint.action && <span className="mt-1.5 block text-[11px] font-medium text-[color:var(--system-blue)]">{hint.action}</span>}
+          </span>,
+          layer,
+        )}
+    </>
   );
 }
 

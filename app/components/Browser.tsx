@@ -14,6 +14,7 @@ export function Browser({
   onBack,
   onForward,
   onScrollProgress,
+  content,
 }: {
   dragHandleProps: DragHandleProps;
   lights: React.ReactNode;
@@ -23,6 +24,8 @@ export function Browser({
   onForward?: () => void;
   /** How far the page has been scrolled, from 0 (top) to 1 (240px down); the window grows with it. */
   onScrollProgress?: (progress: number) => void;
+  /** A custom page body (e.g. a full case-study design); replaces the default article layout. */
+  content?: React.ReactNode;
 }) {
   // A new page starts at the top, so the window goes back to its normal size.
   useEffect(() => {
@@ -84,6 +87,8 @@ export function Browser({
         onScroll={(e) => onScrollProgress?.(Math.min(1, Math.max(0, e.currentTarget.scrollTop / 240)))}
         className="min-h-0 flex-1 select-text overflow-auto bg-white text-[#1d1d1f]"
       >
+        {content ?? (
+        <>
         <header className="px-10 pb-12 pt-10 text-white" style={{ background: article.brandColor }}>
           <img src={article.logo} alt="" className={article.logoClassName ?? "h-[44px] w-auto rounded-[4px]"} draggable={false} />
           <p className="mt-10 text-[12px] font-semibold uppercase tracking-[0.1em] text-white/80">{article.eyebrow}</p>
@@ -118,6 +123,8 @@ export function Browser({
             </section>
           ))}
         </article>
+        </>
+        )}
       </div>
     </div>
   );

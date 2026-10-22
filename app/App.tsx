@@ -18,6 +18,7 @@ import { WindowPreview } from "./components/WindowPreview";
 import { CompassIcon } from "lucide-react";
 import { MobileSafari } from "./components/MobileSafari";
 import { ControlCenter } from "./components/ControlCenter";
+import { TrustBankCase } from "./components/TrustBankCase";
 import { aboutIcon, aboutPortrait } from "./data/aboutVideo";
 import { dockSections, finderIcon, spinItIcon } from "./data/dock";
 import { projects, type Project } from "./data/portfolio";
@@ -731,6 +732,16 @@ export function App() {
                   dragHandleProps={dragHandleProps}
                   lights={lights}
                   article={caseStudies[page]}
+                  content={
+                    page === "Trust Bank" ? (
+                      <TrustBankCase
+                        initialLight={!isDark}
+                        nextTitle={index < caseOrder.length - 1 ? caseOrder[index + 1] : undefined}
+                        onNext={index < caseOrder.length - 1 ? goTo(index + 1) : undefined}
+                        onBack={() => openWindow("projects")}
+                      />
+                    ) : undefined
+                  }
                   onScrollProgress={(p) => setCaseExpand((current) => (current[name] === p ? current : { ...current, [name]: p }))}
                   onBack={index > 0 ? goTo(index - 1) : undefined}
                   onForward={index < caseOrder.length - 1 ? goTo(index + 1) : undefined}
