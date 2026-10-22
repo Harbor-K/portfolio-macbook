@@ -71,6 +71,10 @@ export function Dock({ sections, isRunning, onOpen, minimized = [] }: DockProps)
     hideSoon(1600);
   }, [minimizedCount]);
 
+  // With no apps in it, the Dock only exists to hold minimized windows; when there are none it disappears entirely.
+  const hasItems = sections.some((section) => section.length > 0) || minimized.length > 0;
+  if (!hasItems) return null;
+
   return (
     <>
     {/* Invisible strip along the bottom edge: reaching it brings the Dock up. */}

@@ -11,14 +11,14 @@ import { KimLLM } from "./components/KimLLM";
 import { Reminders } from "./components/Reminders";
 import { Notes } from "./components/Notes";
 import { notes } from "./data/notes";
-import { Settings, type ThemeSetting } from "./components/Settings";
+import { Settings, type SettingsPane, type ThemeSetting } from "./components/Settings";
 import type { A11ySettings } from "./components/AccessibilityPane";
 import { SpinIt } from "./components/SpinIt";
 import { WindowPreview } from "./components/WindowPreview";
-import { CompassIcon } from "lucide-react";
+import { AccessibilityIcon, CompassIcon, ContrastIcon, ListChecksIcon, MusicIcon, type LucideIcon } from "lucide-react";
 import { MobileSafari } from "./components/MobileSafari";
 import { aboutIcon, aboutPortrait } from "./data/aboutVideo";
-import { type DockApp, dockSections, finderIcon, settingsIcon, spinItIcon } from "./data/dock";
+import { dockSections, finderIcon, settingsIcon, spinItIcon } from "./data/dock";
 import { projects, type Project } from "./data/portfolio";
 import { cvPdfIcon, notesIcon, projectFolderIcon } from "./data/projectFolderIcon";
 import { tagColorFor } from "./data/tags";
@@ -334,9 +334,21 @@ export function App() {
     focusWindow(windowName);
   }
 
-  function openFromDock(app: DockApp) {
-    if (app.action) openWindow(app.action);
+  // Menu bar extras (between Kim LLM and the clock) replace the Dock's app icons. Accessibility and Appearance
+  // open System Settings on that pane; the music note opens Spin it; the checklist opens Reminders.
+  const [settingsPane, setSettingsPane] = useState<SettingsPane>("appearance");
+  const [settingsOpenCount, setSettingsOpenCount] = useState(0);
+  function openSettings(pane: SettingsPane) {
+    setSettingsPane(pane);
+    setSettingsOpenCount((n) => n + 1); // re-open on the requested pane even if Settings is already open
+    openWindow("settings");
   }
+  const menuExtras: { id: string; label: string; icon: LucideIcon; active: boolean; onClick: () => void }[] = [
+    { id: "accessibility", label: "Accessibility", icon: AccessibilityIcon, active: activeWindow === "settings" && settingsPane === "accessibility", onClick: () => openSettings("accessibility") },
+    { id: "appearance", label: "Appearance", icon: ContrastIcon, active: activeWindow === "settings" && settingsPane === "appearance", onClick: () => openSettings("appearance") },
+    { id: "spinit", label: "Spin it", icon: MusicIcon, active: activeWindow === "spinit", onClick: () => openWindow("spinit") },
+    { id: "reminders", label: "Reminders", icon: ListChecksIcon, active: activeWindow === "reminders", onClick: () => openWindow("reminders") },
+  ];
 
   const minimizedInDock: MinimizedWindow[] = minimizeOrder
     .filter((name) => openWindows[name])
@@ -528,6 +540,31 @@ export function App() {
               <KimLlmGlyph />
               Kim LLM
             </button>
+            {/* Menu bar extras, like the status icons on a Mac: a grey label appears under an icon on hover. */}
+            <div className="-mx-[4px] flex items-center gap-[2px]">
+              {menuExtras.map(({ id, label, icon: Icon, active, onClick }) => (
+                <button
+                  key={id}
+                  type="button"
+                  aria-label={label}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onClick();
+                  }}
+                  className={`group relative flex h-[20px] w-[28px] items-center justify-center rounded-[5px] ${
+                    tone === "light" ? (active ? "bg-black/[0.1]" : "hover:bg-black/[0.05]") : active ? "bg-white/25" : "hover:bg-white/15"
+                  }`}
+                >
+                  <Icon className="h-[15px] w-[15px]" strokeWidth={2} />
+                  <span
+                    role="tooltip"
+                    className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] -translate-x-1/2 whitespace-nowrap rounded-[5px] bg-[#e4e4e7]/95 px-2.5 py-[3px] text-[12px] font-normal text-black/80 opacity-0 shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-opacity duration-100 [text-shadow:none] group-hover:opacity-100 group-hover:delay-500"
+                  >
+                    {label}
+                  </span>
+                </button>
+              ))}
+            </div>
             <time dateTime={now.toISOString()} className="whitespace-pre tabular-nums">
               {formatMenuTime(now)}
             </time>
@@ -713,6 +750,8 @@ export function App() {
           >
             {({ dragHandleProps, lights }) => (
               <Settings
+                key={`${settingsPane}-${settingsOpenCount}`}
+                initialPane={settingsPane}
                 dragHandleProps={dragHandleProps}
                 lights={lights}
                 theme={theme}
@@ -757,7 +796,8 @@ export function App() {
 
         <KimLLM open={llmOpen} onClose={() => setLlmOpen(false)} />
 
-        <Dock sections={dockSections} isRunning={(app) => Boolean(app.running || (app.action && openWindows[app.action]))} onOpen={openFromDock} minimized={minimizedInDock} />
+        {/* No app icons in the Dock any more (they moved to the menu bar); it only appears to hold minimized windows. */}
+        <Dock sections={[]} isRunning={() => false} onOpen={() => {}} minimized={minimizedInDock} />
       </div>
       )}
     </main>

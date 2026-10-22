@@ -9,7 +9,8 @@ export type ThemeSetting = "auto" | "light" | "dark";
 const glass =
   "bg-white/70 shadow-[0_1px_3px_rgba(0,0,0,0.08),inset_0_0_0_0.5px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-xl";
 
-type Pane = "appearance" | "wallpaper" | "accessibility";
+export type SettingsPane = "appearance" | "wallpaper" | "accessibility";
+type Pane = SettingsPane;
 
 const panes: { id: Pane; name: string; icon: typeof ContrastIcon; tile: string }[] = [
   { id: "appearance", name: "Appearance", icon: ContrastIcon, tile: "bg-[#1d1d1f]" },
