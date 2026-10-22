@@ -334,19 +334,19 @@ export function App() {
   // under its icon and clicking the icon again closes it: the checklist ("Scheduled", the visitor's guide to
   // the portfolio) and Control Center (accessibility, Dark Mode and Spin it's music). Only one is open at a time.
   const [openMenu, setOpenMenu] = useState<"checklist" | "control" | null>(null);
-  const [checklistLeft, setChecklistLeft] = useState(8);
+  const [checklistRight, setChecklistRight] = useState(8);
   // How far each case-study page is scrolled (0–1); its window grows to fill the desktop as it goes.
   const [caseExpand, setCaseExpand] = useState<Record<string, number>>({});
   const [controlRight, setControlRight] = useState(8);
   const extrasRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const desktopRef = useRef<HTMLDivElement>(null);
-  // The drop-downs are drawn outside the menu bar: the checklist starts at its icon's left edge (like a macOS
-  // status menu, kept on screen), Control Center lines up under the right edge of its icon.
+  // The drop-downs are drawn outside the menu bar, each lined up under the right edge of its own icon
+  // (so they open toward the left, away from the clock).
   function toggleChecklist(button: HTMLElement) {
     const host = desktopRef.current?.getBoundingClientRect();
     const icon = button.getBoundingClientRect();
-    if (host) setChecklistLeft(Math.max(8, Math.min(Math.round(icon.left - host.left - 6), Math.round(host.width - 312 - 8))));
+    if (host) setChecklistRight(Math.max(8, Math.round(host.right - icon.right - 8)));
     setOpenMenu((menu) => (menu === "checklist" ? null : "checklist"));
   }
   function toggleControl(button: HTMLElement) {
@@ -578,7 +578,7 @@ export function App() {
         </header>
 
         {openMenu === "checklist" && (
-          <div ref={menuRef} className="absolute top-[30px] z-[110]" style={{ left: checklistLeft }}>
+          <div ref={menuRef} className="absolute top-[30px] z-[110]" style={{ right: checklistRight }}>
             <ChecklistMenu
               icon={<RemindersGlyph />}
               onClose={() => setOpenMenu(null)}
@@ -736,7 +736,7 @@ export function App() {
                   content={
                     page === "Trust Bank" ? (
                       <TrustBankCase
-                        initialLight={!isDark}
+                        light={!isDark}
                         nextTitle={index < caseOrder.length - 1 ? caseOrder[index + 1] : undefined}
                         onNext={index < caseOrder.length - 1 ? goTo(index + 1) : undefined}
                         onBack={() => openWindow("projects")}

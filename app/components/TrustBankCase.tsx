@@ -1,13 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ArrowLeftIcon, ArrowRightIcon, Mail } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 
-// The Trust Bank case study, using the same design as Harbor's minimal portfolio
-// (project-hb.magicpatterns.app/#/work/trust-bank): Helvetica Neue, dark / light tokens with a lime accent,
-// a big image area, a sticky left column with the title and section links, and the long-form sections.
-// It lives inside the Safari-style window, so its colours are scoped to `.hb-case` and its theme switch
-// (the hanging bulb) only changes this page.
+// The Trust Bank case study page: Helvetica Neue, dark / light tokens with a lime accent, a big image area,
+// a sticky left column with the title and section links, and the long-form sections.
+// It lives inside the Safari-style window, so its colours are scoped to `.hb-case`; it follows the
+// desktop's Light / Dark appearance.
 
-const CV_URL = "https://github.com/Harbor-K/portfolio-macbook/blob/main/cv/cv.pdf";
 const EMAIL = "harborkim0328@gmail.com";
 
 const project = {
@@ -80,19 +78,6 @@ const styles = `
   font-family:"Helvetica Neue", Helvetica, Arial, sans-serif; color:var(--fg); background:var(--bg); font-synthesis:none; transition:background .3s, color .3s; }
 .hb-case[data-theme="light"] { --bg:#f5f5f2; --fg:#141615; --muted:#5f6662; --faint:#9a9f9c; --surface:#e6e7e3; --surface-2:#ecede9; --surface-hover:#dcdeda; --line:#c6c9c5; --hairline:#dfe1dc; --accent-text:#5a6b00; --accent-bg:#e7ff1a; --on-accent:#0b0d0d; }
 .hb-case ::selection { background:#e7ff1a; color:#0b0d0d; }
-.hb-case .site-header { height:80px; margin:0 auto 32px; display:flex; justify-content:flex-end; align-items:flex-start; gap:10px; }
-.hb-case .quick-links { display:flex; align-items:center; gap:4px; height:78px; }
-.hb-case .cv-button { display:inline-flex; align-items:center; height:32px; padding:0 14px; margin-right:4px; border:1px solid var(--line); border-radius:999px; color:var(--fg); font-size:13px; font-weight:500; letter-spacing:.02em; text-decoration:none; transition:background .2s, border-color .2s, color .2s; }
-.hb-case .cv-button:hover { background:var(--fg); border-color:var(--fg); color:var(--bg); }
-.hb-case .icon-button { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border:0; border-radius:999px; background:transparent; color:var(--muted); cursor:pointer; transition:background .2s, color .2s; }
-.hb-case .icon-button:hover { color:var(--fg); background:var(--surface); }
-.hb-case .lamp { display:block; padding:0 3px; margin:0; border:0; background:none; color:var(--fg); cursor:pointer; line-height:0; }
-.hb-case .lamp svg { display:block; overflow:visible; }
-.hb-case .lamp-bulb { fill:transparent; opacity:.6; transition:fill .25s ease, opacity .25s ease, filter .25s ease; }
-.hb-case .lamp-filament { opacity:.6; transition:opacity .25s ease; }
-.hb-case .lamp:hover .lamp-bulb, .hb-case .lamp:hover .lamp-filament { opacity:1; }
-.hb-case .lamp.is-on .lamp-bulb { fill:#ffe9a8; opacity:1; filter:drop-shadow(0 0 4px rgba(255,200,90,.55)); }
-.hb-case .lamp.is-on .lamp-filament { opacity:1; }
 `;
 
 function ImagePlaceholder({ className = "" }: { className?: string }) {
@@ -120,42 +105,20 @@ function Body({ children }: { children: React.ReactNode }) {
   return <p className="mt-4 max-w-[680px] text-[16px] leading-[1.6] tracking-[-0.01em] text-[var(--muted)]">{children}</p>;
 }
 
-/* Hanging bulb theme switch: lit = light mode, unlit = dark mode. */
-function LampToggle({ light, onToggle }: { light: boolean; onToggle: () => void }) {
-  return (
-    <button
-      type="button"
-      className={light ? "lamp is-on" : "lamp"}
-      onClick={onToggle}
-      aria-label={light ? "Switch to dark mode" : "Switch to light mode"}
-      aria-pressed={light}
-      title={light ? "Dark mode" : "Light mode"}
-    >
-      <svg width="30" height="48" viewBox="0 0 40 64" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <line x1="20" y1="0" x2="20" y2="30" />
-        <rect x="15.5" y="30" width="9" height="8" rx="1.5" fill="currentColor" />
-        <path className="lamp-bulb" d="M16.5 38 C16.5 42 10 45 10 52 A10 10 0 0 0 30 52 C30 45 23.5 42 23.5 38 Z" />
-        <path className="lamp-filament" d="M17 52 l1.5-3 1.5 3 1.5-3 1.5 3" strokeWidth="1.2" />
-      </svg>
-    </button>
-  );
-}
-
 export function TrustBankCase({
-  initialLight,
+  light,
   nextTitle,
   onNext,
   onBack,
 }: {
-  /** Start in the light version (follows the desktop's appearance when the window opens). */
-  initialLight: boolean;
+  /** Light version (the desktop is in Light mode) or dark. */
+  light: boolean;
   nextTitle?: string;
   onNext?: () => void;
   /** "Back" and "Home": open the list of all projects. */
   onBack: () => void;
 }) {
   const p = project;
-  const [light, setLight] = useState(initialLight);
   const [active, setActive] = useState(SECTIONS[0].id);
   const rootRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(1000);
@@ -201,22 +164,10 @@ export function TrustBankCase({
   );
 
   return (
-    <div ref={rootRef} className={`hb-case min-h-full w-full ${md ? "px-6 pb-6" : sm ? "px-4 pb-4" : "px-3 pb-3"}`} data-theme={light ? "light" : "dark"}>
+    <div ref={rootRef} className={`hb-case min-h-full w-full ${md ? "p-6" : sm ? "p-4" : "p-3"}`} data-theme={light ? "light" : "dark"}>
       <style>{styles}</style>
       <SizeContext.Provider value={size}>
       <div className="mx-auto w-full max-w-[1680px]">
-        <header className="site-header">
-          <nav className="quick-links" aria-label="Quick links">
-            <a className="cv-button" href={CV_URL} target="_blank" rel="noreferrer">
-              CV
-            </a>
-            <a className="icon-button" href={`mailto:${EMAIL}`} aria-label={`Email ${EMAIL}`} title={EMAIL}>
-              <Mail size={18} strokeWidth={1.6} aria-hidden="true" />
-            </a>
-          </nav>
-          <LampToggle light={light} onToggle={() => setLight((v) => !v)} />
-        </header>
-
         <ImagePlaceholder className={md ? "h-[min(72vh,760px)] min-h-[280px]" : "h-[44vh] min-h-[280px]"} />
 
         <div className={lg ? "mt-14 grid grid-cols-[minmax(220px,0.5fr)_minmax(0,1.5fr)] gap-16" : "mt-10 grid gap-10"}>
