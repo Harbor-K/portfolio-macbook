@@ -353,8 +353,7 @@ export function App() {
   const extrasRef = useRef<HTMLDivElement>(null);
   const controlRef = useRef<HTMLDivElement>(null);
   const desktopRef = useRef<HTMLDivElement>(null);
-  // Control Center is drawn outside the menu bar (so its frosted-glass blur sees the desktop behind it),
-  // lined up under the right edge of its icon.
+  // Control Center is drawn outside the menu bar, lined up under the right edge of its icon.
   function toggleControl(button: HTMLElement) {
     const host = desktopRef.current?.getBoundingClientRect();
     const icon = button.getBoundingClientRect();
